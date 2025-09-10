@@ -290,27 +290,14 @@ TP_Rick_Mean_PDSI_preds$ci_upper <- TP_Rick_Mean_PDSI_preds$predicted_prob + 1.9
 ```
 
 
-
-## Plots
+### Manuscript Figures
 
 ```{r}
 
 # plot for reconstruction age with both bacterias
 
 ggplot() +
-  geom_point(data = PF_adult_gridMET_2018_2023_BOI, aes(x = Restime, y = FrancisellaPresence))
-
-#
-  
-## cant really add raw data because such different y scales?
-
-
-
-
-
-
-
- geom_line(data = PF_Fran_Restime_preds, aes(x = Restime, y = predicted_prob),
+  geom_line(data = PF_Fran_Restime_preds, aes(x = Restime, y = predicted_prob),
             linetype = "dashed") +
   geom_ribbon(data = PF_Fran_Restime_preds, 
               aes(x = Restime, y = predicted_prob,
@@ -323,90 +310,21 @@ ggplot() +
   ylab("Predicted Probability") +
   theme_classic()
 
+  
+### cant really add raw data because such different y scales?
 
-#
- 
-
-
-
+### add a legend
 
 
-
+# plot for fire with both bacterias
 
 
 
+# plot for max summer temp
 
 
-#plot
-PF_Fran_Restime_plot <- ggplot(PF_Fran_Restime_preds, aes(x = Restime, y = predicted_prob)) +
-  geom_line() +
-  ylim(0.45, 0.8) +
-  geom_ribbon(aes(ymin = ci_lower, ymax = ci_upper), alpha = 0.2) +
-  labs(title = "(a)",
-       x = "Reconstruction Year",
-       y = "Francisella Predicted Probability") +
-  theme_classic()
 
-
-# Plot
-PF_Fran_max_summer_temp_plot <- ggplot(PF_Fran_max_temp_summer_preds, aes(x = max_temp_summer, y = predicted_prob)) +
-  geom_line() +
-  ylim(0.45, 0.8) +
-  geom_ribbon(aes(ymin = ci_lower, ymax = ci_upper), alpha = 0.2) +
-  labs(title = "(b)",
-       x = "Maximum Summer Temperature (°C)",
-       y = "Francisella Predicted Probability") +
-  theme_classic()
-
-# Plot
-PF_Fran_Mean_PDSI_plot <- ggplot(PF_Fran_Mean_PDSI_preds, aes(x = Mean_PDSI, y = predicted_prob)) +
-  geom_line() +
-  ylim(0.45, 0.8) +
-  geom_ribbon(aes(ymin = ci_lower, ymax = ci_upper), alpha = 0.2) +
-  labs(title = "(c)",
-       x = "Mean PDSI",
-       y = "Francisella Predicted Probability") +
-  theme_classic()
-
-
-#####################################
-
-#plot
-TP_Fran_FireTime_plot <- ggplot(TP_Fran_FireTime_preds, aes(x = FireTime, y = predicted_prob)) +
-  geom_line() +
-  ylim(0.50, 0.80) +
-  geom_ribbon(aes(ymin = ci_lower, ymax = ci_upper), alpha = 0.2) +
-    labs(title = "(a)",
-       x = "Time Since Burn",
-       y = "Francisella Predicted Probability") +
-  theme_classic()
-
-# Plot
-TP_Fran_max_summer_temp_plot <- ggplot(TP_Fran_max_temp_summer_preds, aes(x = max_temp_summer, y = predicted_prob)) +
-  geom_line() +
-  #ylim(0.50, 0.80) +
-  geom_ribbon(aes(ymin = ci_lower, ymax = ci_upper), alpha = 0.2) +
-  labs(title = "(b)",
-       x = "Maximum Summer Temperature (°C)",
-       y = "Francisella Predicted Probability") +
-  theme_classic()
-
-# Plot
-TP_Fran_Mean_PDSI_plot <- ggplot(TP_Fran_Mean_PDSI_preds, aes(x = Mean_PDSI, y = predicted_prob)) +
-  geom_line() +
-  ylim(0.50, 0.80) +
-  geom_ribbon(aes(ymin = ci_lower, ymax = ci_upper), alpha = 0.2) +
-  labs(title = "(c)",
-       x = "Mean PDSI",
-       y = "Francisella Predicted Probability") +
-  theme_classic()
-
-```
-
-
-### Manuscript Figures
-
-```{r}
+# plot for pdsi
 
 ```
 
@@ -414,6 +332,8 @@ TP_Fran_Mean_PDSI_plot <- ggplot(TP_Fran_Mean_PDSI_preds, aes(x = Mean_PDSI, y =
 ### Oral Presentation Figure
 
 ```{r}
+# map of field sites
+
 
 ```
 
@@ -422,6 +342,23 @@ TP_Fran_Mean_PDSI_plot <- ggplot(TP_Fran_Mean_PDSI_preds, aes(x = Mean_PDSI, y =
 ### Poster Presentation Figure
 
 ```{r}
+
+# plot for francisella positive cases over years
+PF_Fran_pos <- PF_adult_gridMET_2018_2023_BOI |> 
+  group_by(YEAR) |> 
+  summarise(positives = sum(FrancisellaPresence),
+            total = nrow(PF_adult_gridMET_2018_2023_BOI))
+
+PF_Fran_pos <- PF_Fran_pos |> 
+  mutate(percent = (positives/total) * 100)
+
+
+
+ggplot() +
+  geom_point(data = PF_Fran_pos, aes(x = YEAR, y = percent)) #### HEY YOU WERE HERE
+
+# plot for rickettsia presence over years
+
 
 ```
 
