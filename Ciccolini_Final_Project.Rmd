@@ -1,0 +1,443 @@
+---
+title: "Ciccolini_Final_Proj"
+author: "Skylar Ciccolini"
+date: "2025-09-10"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+### Set Up
+
+## Libraries, bring in data, etc
+```{r}
+library(tidyverse)
+library(AICcmodavg)
+library(lme4)
+library(plotly)
+library(gridExtra)
+library(see)
+
+
+# read in data
+
+PF_adult_gridMET_2018_2023_BOI <- read_csv("Data/PF_adult_gridMET_2018_2023_BOI.csv")
+
+# remove NAs
+PF_adult_gridMET_2018_2023_BOI <- PF_adult_gridMET_2018_2023_BOI |> 
+  filter(!is.na(Restime) & is.finite(Restime))
+
+# read in data
+
+TP_adult_gridMET_2018_2023_BOI <- read_csv("Data/TP_adult_gridMET_2018_2023_BOI.csv")
+
+# remove NAs
+TP_adult_gridMET_2018_2023_BOI <- TP_adult_gridMET_2018_2023_BOI %>%
+  filter(!is.na(FireTime) & is.finite(FireTime))
+
+```
+
+## Models and predictions for Francisella 
+
+```{r}
+
+PF_Fran_climate_Restime_glm <- glm(data = PF_adult_gridMET_2018_2023_BOI, family = binomial,
+                                  FrancisellaPresence~Restime + max_temp_summer : Mean_PDSI)
+
+TP_Fran_climate_FireTime_glm <- glm(data = TP_adult_gridMET_2018_2023_BOI, family = binomial,
+                                    FrancisellaPresence~FireTime + max_temp_summer : Mean_PDSI)
+
+
+
+# predicted values
+PF_Fran_Restime_preds <- data.frame(
+  Restime = seq(min(PF_adult_gridMET_2018_2023_BOI$Restime), max(PF_adult_gridMET_2018_2023_BOI$Restime), length.out = 100),
+  max_temp_summer = mean(PF_adult_gridMET_2018_2023_BOI$max_temp_summer),
+  Mean_PDSI = mean(PF_adult_gridMET_2018_2023_BOI$Mean_PDSI)
+)
+
+PF_Fran_Restime_preds$predicted_prob <- predict(PF_Fran_climate_Restime_glm, 
+                                                newdata = PF_Fran_Restime_preds, type = "response")
+
+#add std error
+PF_Fran_Restime_preds$std_error <- with(PF_Fran_Restime_preds, sd(predicted_prob) / sqrt(length(predicted_prob)))
+PF_Fran_Restime_preds$ci_lower <- PF_Fran_Restime_preds$predicted_prob - 1.96 * PF_Fran_Restime_preds$std_error
+PF_Fran_Restime_preds$ci_upper <- PF_Fran_Restime_preds$predicted_prob + 1.96 * PF_Fran_Restime_preds$std_error
+
+
+
+# Create a new data frame for predictions
+PF_Fran_max_temp_summer_preds <- data.frame(
+  Restime = mean(PF_adult_gridMET_2018_2023_BOI$Restime),
+  max_temp_summer = seq(min(PF_adult_gridMET_2018_2023_BOI$max_temp_summer), max(PF_adult_gridMET_2018_2023_BOI$max_temp_summer), length.out = 100),
+  Mean_PDSI = mean(PF_adult_gridMET_2018_2023_BOI$Mean_PDSI)
+)
+
+# Add predicted probabilities
+PF_Fran_max_temp_summer_preds$predicted_prob <- predict(PF_Fran_climate_Restime_glm, 
+                                                        newdata = PF_Fran_max_temp_summer_preds, type = "response")
+
+#add std error
+
+PF_Fran_max_temp_summer_preds$std_error <- with(PF_Fran_max_temp_summer_preds, sd(predicted_prob) / sqrt(length(predicted_prob)))
+PF_Fran_max_temp_summer_preds$ci_lower <- PF_Fran_max_temp_summer_preds$predicted_prob - 1.96 * PF_Fran_max_temp_summer_preds$std_error
+PF_Fran_max_temp_summer_preds$ci_upper <- PF_Fran_max_temp_summer_preds$predicted_prob + 1.96 * PF_Fran_max_temp_summer_preds$std_error
+
+
+# Create a new data frame for predictions
+PF_Fran_Mean_PDSI_preds <- data.frame(
+  Restime = mean(PF_adult_gridMET_2018_2023_BOI$Restime),
+  max_temp_summer = mean(PF_adult_gridMET_2018_2023_BOI$max_temp_summer),
+  Mean_PDSI = seq(min(PF_adult_gridMET_2018_2023_BOI$Mean_PDSI), max(PF_adult_gridMET_2018_2023_BOI$Mean_PDSI), length.out = 100)
+)
+
+# Add predicted probabilities
+PF_Fran_Mean_PDSI_preds$predicted_prob <- predict(PF_Fran_climate_Restime_glm, 
+                                                  newdata = PF_Fran_Mean_PDSI_preds, type = "response")
+#add std error
+
+PF_Fran_Mean_PDSI_preds$std_error <- with(PF_Fran_Mean_PDSI_preds, sd(predicted_prob) / sqrt(length(predicted_prob)))
+PF_Fran_Mean_PDSI_preds$ci_lower <- PF_Fran_Mean_PDSI_preds$predicted_prob - 1.96 * PF_Fran_Mean_PDSI_preds$std_error
+PF_Fran_Mean_PDSI_preds$ci_upper <- PF_Fran_Mean_PDSI_preds$predicted_prob + 1.96 * PF_Fran_Mean_PDSI_preds$std_error
+
+
+
+
+####################################################
+
+# predicted values
+TP_Fran_FireTime_preds <- data.frame(
+  FireTime = seq(min(TP_adult_gridMET_2018_2023_BOI$FireTime), max(TP_adult_gridMET_2018_2023_BOI$FireTime), length.out = 100),
+  max_temp_summer = mean(TP_adult_gridMET_2018_2023_BOI$max_temp_summer),
+  Mean_PDSI = mean(TP_adult_gridMET_2018_2023_BOI$Mean_PDSI)
+)
+
+TP_Fran_FireTime_preds$predicted_prob <- predict(TP_Fran_climate_FireTime_glm, 
+                                                 newdata = TP_Fran_FireTime_preds, type = "response")
+#add std error
+
+TP_Fran_FireTime_preds$std_error <- with(TP_Fran_FireTime_preds, sd(predicted_prob) / sqrt(length(predicted_prob)))
+TP_Fran_FireTime_preds$ci_lower <- TP_Fran_FireTime_preds$predicted_prob - 1.96 * TP_Fran_FireTime_preds$std_error
+TP_Fran_FireTime_preds$ci_upper <- TP_Fran_FireTime_preds$predicted_prob + 1.96 * TP_Fran_FireTime_preds$std_error
+
+
+
+# Create a new data frame for predictions
+TP_Fran_max_temp_summer_preds <- data.frame(
+  FireTime = mean(TP_adult_gridMET_2018_2023_BOI$FireTime),
+  max_temp_summer = seq(min(TP_adult_gridMET_2018_2023_BOI$max_temp_summer), max(TP_adult_gridMET_2018_2023_BOI$max_temp_summer), length.out = 100),
+  Mean_PDSI = mean(TP_adult_gridMET_2018_2023_BOI$Mean_PDSI)
+)
+
+# Add predicted probabilities
+TP_Fran_max_temp_summer_preds$predicted_prob <- predict(TP_Fran_climate_FireTime_glm, 
+                                                        newdata = TP_Fran_max_temp_summer_preds, type = "response")
+#add std error
+
+TP_Fran_max_temp_summer_preds$std_error <- with(TP_Fran_max_temp_summer_preds, sd(predicted_prob) / sqrt(length(predicted_prob)))
+TP_Fran_max_temp_summer_preds$ci_lower <- TP_Fran_max_temp_summer_preds$predicted_prob - 1.96 * TP_Fran_max_temp_summer_preds$std_error
+TP_Fran_max_temp_summer_preds$ci_upper <- TP_Fran_max_temp_summer_preds$predicted_prob + 1.96 * TP_Fran_max_temp_summer_preds$std_error
+
+
+
+# Create a new data frame for predictions
+TP_Fran_Mean_PDSI_preds <- data.frame(
+  FireTime = mean(TP_adult_gridMET_2018_2023_BOI$FireTime),
+  max_temp_summer = mean(TP_adult_gridMET_2018_2023_BOI$max_temp_summer),
+  Mean_PDSI = seq(min(TP_adult_gridMET_2018_2023_BOI$Mean_PDSI), max(TP_adult_gridMET_2018_2023_BOI$Mean_PDSI), length.out = 100)
+)
+
+# Add predicted probabilities
+TP_Fran_Mean_PDSI_preds$predicted_prob <- predict(TP_Fran_climate_FireTime_glm, 
+                                                  newdata = TP_Fran_Mean_PDSI_preds, type = "response")
+#add std error
+
+TP_Fran_Mean_PDSI_preds$std_error <- with(TP_Fran_Mean_PDSI_preds, sd(predicted_prob) / sqrt(length(predicted_prob)))
+TP_Fran_Mean_PDSI_preds$ci_lower <- TP_Fran_Mean_PDSI_preds$predicted_prob - 1.96 * TP_Fran_Mean_PDSI_preds$std_error
+TP_Fran_Mean_PDSI_preds$ci_upper <- TP_Fran_Mean_PDSI_preds$predicted_prob + 1.96 * TP_Fran_Mean_PDSI_preds$std_error
+
+
+
+
+```
+
+
+## Models and predictions for Rickettsia
+
+```{r}
+
+PF_Rick_climate_Restime_glm <- glm(data = PF_adult_gridMET_2018_2023_BOI, family = binomial,
+                                  RickettsiaPresence~Restime + max_temp_summer : Mean_PDSI)
+
+TP_Rick_climate_FireTime_glm <- glm(data = TP_adult_gridMET_2018_2023_BOI, family = binomial,
+                                    RickettsiaPresence~FireTime + max_temp_summer : Mean_PDSI)
+
+
+#plot predicted values
+PF_Rick_Restime_preds <- data.frame(
+  Restime = seq(min(PF_adult_gridMET_2018_2023_BOI$Restime), max(PF_adult_gridMET_2018_2023_BOI$Restime), length.out = 100),
+  max_temp_summer = mean(PF_adult_gridMET_2018_2023_BOI$max_temp_summer),
+  Mean_PDSI = mean(PF_adult_gridMET_2018_2023_BOI$Mean_PDSI)
+)
+
+PF_Rick_Restime_preds$predicted_prob <- predict(PF_Rick_climate_Restime_glm, 
+                                                newdata = PF_Rick_Restime_preds, type = "response")
+
+#add std error
+
+PF_Rick_Restime_preds$std_error <- with(PF_Rick_Restime_preds, sd(predicted_prob) / sqrt(length(predicted_prob)))
+PF_Rick_Restime_preds$ci_lower <- PF_Rick_Restime_preds$predicted_prob - 1.96 * PF_Rick_Restime_preds$std_error
+PF_Rick_Restime_preds$ci_upper <- PF_Rick_Restime_preds$predicted_prob + 1.96 * PF_Rick_Restime_preds$std_error
+
+
+
+# Create a new data frame for predictions
+PF_Rick_max_temp_summer_preds <- data.frame(
+  Restime = mean(PF_adult_gridMET_2018_2023_BOI$Restime),
+  max_temp_summer = seq(min(PF_adult_gridMET_2018_2023_BOI$max_temp_summer), max(PF_adult_gridMET_2018_2023_BOI$max_temp_summer), length.out = 100),
+  Mean_PDSI = mean(PF_adult_gridMET_2018_2023_BOI$Mean_PDSI)
+)
+
+# Add predicted probabilities
+PF_Rick_max_temp_summer_preds$predicted_prob <- predict(PF_Rick_climate_Restime_glm, 
+                                                        newdata = PF_Rick_max_temp_summer_preds, type = "response")
+
+#add std error
+
+PF_Rick_max_temp_summer_preds$std_error <- with(PF_Rick_max_temp_summer_preds, sd(predicted_prob) / sqrt(length(predicted_prob)))
+PF_Rick_max_temp_summer_preds$ci_lower <- PF_Rick_max_temp_summer_preds$predicted_prob - 1.96 * PF_Rick_max_temp_summer_preds$std_error
+PF_Rick_max_temp_summer_preds$ci_upper <- PF_Rick_max_temp_summer_preds$predicted_prob + 1.96 * PF_Rick_max_temp_summer_preds$std_error
+
+
+# Create a new data frame for predictions
+PF_Rick_Mean_PDSI_preds <- data.frame(
+  Restime = mean(PF_adult_gridMET_2018_2023_BOI$Restime),
+  max_temp_summer = mean(PF_adult_gridMET_2018_2023_BOI$max_temp_summer),
+  Mean_PDSI = seq(min(PF_adult_gridMET_2018_2023_BOI$Mean_PDSI), max(PF_adult_gridMET_2018_2023_BOI$Mean_PDSI), length.out = 100)
+)
+
+# Add predicted probabilities
+PF_Rick_Mean_PDSI_preds$predicted_prob <- predict(PF_Rick_climate_Restime_glm, 
+                                                  newdata = PF_Rick_Mean_PDSI_preds, type = "response")
+
+
+#add std error
+
+PF_Rick_Mean_PDSI_preds$std_error <- with(PF_Rick_Mean_PDSI_preds, sd(predicted_prob) / sqrt(length(predicted_prob)))
+PF_Rick_Mean_PDSI_preds$ci_lower <- PF_Rick_Mean_PDSI_preds$predicted_prob - 1.96 * PF_Rick_Mean_PDSI_preds$std_error
+PF_Rick_Mean_PDSI_preds$ci_upper <- PF_Rick_Mean_PDSI_preds$predicted_prob + 1.96 * PF_Rick_Mean_PDSI_preds$std_error
+
+
+#plot predicted values
+TP_Rick_FireTime_preds <- data.frame(
+  FireTime = seq(min(TP_adult_gridMET_2018_2023_BOI$FireTime), max(TP_adult_gridMET_2018_2023_BOI$FireTime), length.out = 100),
+  max_temp_summer = mean(TP_adult_gridMET_2018_2023_BOI$max_temp_summer),
+  Mean_PDSI = mean(TP_adult_gridMET_2018_2023_BOI$Mean_PDSI)
+)
+
+TP_Rick_FireTime_preds$predicted_prob <- predict(TP_Rick_climate_FireTime_glm, 
+                                                 newdata = TP_Rick_FireTime_preds, type = "response")
+
+#add std error
+
+TP_Rick_FireTime_preds$std_error <- with(TP_Rick_FireTime_preds, sd(predicted_prob) / sqrt(length(predicted_prob)))
+TP_Rick_FireTime_preds$ci_lower <- TP_Rick_FireTime_preds$predicted_prob - 1.96 * TP_Rick_FireTime_preds$std_error
+TP_Rick_FireTime_preds$ci_upper <- TP_Rick_FireTime_preds$predicted_prob + 1.96 * TP_Rick_FireTime_preds$std_error
+
+
+# Create a new data frame for predictions
+TP_Rick_max_temp_summer_preds <- data.frame(
+  FireTime = mean(TP_adult_gridMET_2018_2023_BOI$FireTime),
+  max_temp_summer = seq(min(TP_adult_gridMET_2018_2023_BOI$max_temp_summer), max(TP_adult_gridMET_2018_2023_BOI$max_temp_summer), length.out = 100),
+  Mean_PDSI = mean(TP_adult_gridMET_2018_2023_BOI$Mean_PDSI)
+)
+
+# Add predicted probabilities
+TP_Rick_max_temp_summer_preds$predicted_prob <- predict(TP_Rick_climate_FireTime_glm, 
+                                                        newdata = TP_Rick_max_temp_summer_preds, type = "response")
+#add std error
+
+TP_Rick_max_temp_summer_preds$std_error <- with(TP_Rick_max_temp_summer_preds, sd(predicted_prob) / sqrt(length(predicted_prob)))
+TP_Rick_max_temp_summer_preds$ci_lower <- TP_Rick_max_temp_summer_preds$predicted_prob - 1.96 * TP_Rick_max_temp_summer_preds$std_error
+TP_Rick_max_temp_summer_preds$ci_upper <- TP_Rick_max_temp_summer_preds$predicted_prob + 1.96 * TP_Rick_max_temp_summer_preds$std_error
+
+
+
+# Create a new data frame for predictions
+TP_Rick_Mean_PDSI_preds <- data.frame(
+  FireTime = mean(TP_adult_gridMET_2018_2023_BOI$FireTime),
+  max_temp_summer = mean(TP_adult_gridMET_2018_2023_BOI$max_temp_summer),
+  Mean_PDSI = seq(min(TP_adult_gridMET_2018_2023_BOI$Mean_PDSI), max(TP_adult_gridMET_2018_2023_BOI$Mean_PDSI), length.out = 100)
+)
+
+# Add predicted probabilities
+TP_Rick_Mean_PDSI_preds$predicted_prob <- predict(TP_Rick_climate_FireTime_glm, 
+                                                  newdata = TP_Rick_Mean_PDSI_preds, type = "response")
+#add std error
+
+TP_Rick_Mean_PDSI_preds$std_error <- with(TP_Rick_Mean_PDSI_preds, sd(predicted_prob) / sqrt(length(predicted_prob)))
+TP_Rick_Mean_PDSI_preds$ci_lower <- TP_Rick_Mean_PDSI_preds$predicted_prob - 1.96 * TP_Rick_Mean_PDSI_preds$std_error
+TP_Rick_Mean_PDSI_preds$ci_upper <- TP_Rick_Mean_PDSI_preds$predicted_prob + 1.96 * TP_Rick_Mean_PDSI_preds$std_error
+
+
+
+
+
+
+```
+
+
+
+## Plots
+
+```{r}
+
+# plot for reconstruction age with both bacterias
+
+ggplot() +
+  geom_point(data = PF_adult_gridMET_2018_2023_BOI, aes(x = Restime, y = FrancisellaPresence))
+
+#
+  
+## cant really add raw data because such different y scales?
+
+
+
+
+
+
+
+ geom_line(data = PF_Fran_Restime_preds, aes(x = Restime, y = predicted_prob),
+            linetype = "dashed") +
+  geom_ribbon(data = PF_Fran_Restime_preds, 
+              aes(x = Restime, y = predicted_prob,
+                  ymin = ci_lower, ymax = ci_upper), alpha = 0.2) +
+  geom_line(data = PF_Rick_Restime_preds, aes(x = Restime, y = predicted_prob)) +
+  geom_ribbon(data = PF_Rick_Restime_preds, 
+              aes(x = Restime, y = predicted_prob,
+                  ymin = ci_lower, ymax = ci_upper), alpha = 0.2) +
+  xlab("Reconstruction Year") +
+  ylab("Predicted Probability") +
+  theme_classic()
+
+
+#
+ 
+
+
+
+
+
+
+
+
+
+
+
+#plot
+PF_Fran_Restime_plot <- ggplot(PF_Fran_Restime_preds, aes(x = Restime, y = predicted_prob)) +
+  geom_line() +
+  ylim(0.45, 0.8) +
+  geom_ribbon(aes(ymin = ci_lower, ymax = ci_upper), alpha = 0.2) +
+  labs(title = "(a)",
+       x = "Reconstruction Year",
+       y = "Francisella Predicted Probability") +
+  theme_classic()
+
+
+# Plot
+PF_Fran_max_summer_temp_plot <- ggplot(PF_Fran_max_temp_summer_preds, aes(x = max_temp_summer, y = predicted_prob)) +
+  geom_line() +
+  ylim(0.45, 0.8) +
+  geom_ribbon(aes(ymin = ci_lower, ymax = ci_upper), alpha = 0.2) +
+  labs(title = "(b)",
+       x = "Maximum Summer Temperature (°C)",
+       y = "Francisella Predicted Probability") +
+  theme_classic()
+
+# Plot
+PF_Fran_Mean_PDSI_plot <- ggplot(PF_Fran_Mean_PDSI_preds, aes(x = Mean_PDSI, y = predicted_prob)) +
+  geom_line() +
+  ylim(0.45, 0.8) +
+  geom_ribbon(aes(ymin = ci_lower, ymax = ci_upper), alpha = 0.2) +
+  labs(title = "(c)",
+       x = "Mean PDSI",
+       y = "Francisella Predicted Probability") +
+  theme_classic()
+
+
+#####################################
+
+#plot
+TP_Fran_FireTime_plot <- ggplot(TP_Fran_FireTime_preds, aes(x = FireTime, y = predicted_prob)) +
+  geom_line() +
+  ylim(0.50, 0.80) +
+  geom_ribbon(aes(ymin = ci_lower, ymax = ci_upper), alpha = 0.2) +
+    labs(title = "(a)",
+       x = "Time Since Burn",
+       y = "Francisella Predicted Probability") +
+  theme_classic()
+
+# Plot
+TP_Fran_max_summer_temp_plot <- ggplot(TP_Fran_max_temp_summer_preds, aes(x = max_temp_summer, y = predicted_prob)) +
+  geom_line() +
+  #ylim(0.50, 0.80) +
+  geom_ribbon(aes(ymin = ci_lower, ymax = ci_upper), alpha = 0.2) +
+  labs(title = "(b)",
+       x = "Maximum Summer Temperature (°C)",
+       y = "Francisella Predicted Probability") +
+  theme_classic()
+
+# Plot
+TP_Fran_Mean_PDSI_plot <- ggplot(TP_Fran_Mean_PDSI_preds, aes(x = Mean_PDSI, y = predicted_prob)) +
+  geom_line() +
+  ylim(0.50, 0.80) +
+  geom_ribbon(aes(ymin = ci_lower, ymax = ci_upper), alpha = 0.2) +
+  labs(title = "(c)",
+       x = "Mean PDSI",
+       y = "Francisella Predicted Probability") +
+  theme_classic()
+
+```
+
+
+### Manuscript Figures
+
+```{r}
+
+```
+
+
+### Oral Presentation Figure
+
+```{r}
+
+```
+
+
+
+### Poster Presentation Figure
+
+```{r}
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
