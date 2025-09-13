@@ -38,6 +38,14 @@ TP_adult_gridMET_2018_2023_BOI <- read_csv("Data/TP_adult_gridMET_2018_2023_BOI.
 TP_adult_gridMET_2018_2023_BOI <- TP_adult_gridMET_2018_2023_BOI %>%
   filter(!is.na(FireTime) & is.finite(FireTime))
 
+# bring in custom theme
+manuscript_theme <- list(
+  theme_classic(),
+  theme(axis.title = element_text(face = "bold", size = 12),
+        axis.text = element_text(face = "italic", size = 10),
+        text = element_text(family = "Calibri")),
+  set.seed(898760))
+
 ```
 
 ## Models and predictions for Francisella 
@@ -309,13 +317,17 @@ ggplot(combined_preds, aes(x = Restime, y = predicted_prob, linetype = Pathogen)
   geom_ribbon(aes(ymin = ci_lower, ymax = ci_upper), alpha = 0.2) +
   xlab("Reconstruction Year") +
   ylab("Predicted Probability") +
-  theme_classic() +
   scale_linetype_manual(name = "Pathogen", 
-                        values = c("Francisella" = "dashed", "Rickettsia" = "solid"))
+                        labels = c(expression(italic("Francisella")),
+                                   expression(italic("Rickettsia"))),
+                        values = c("Francisella" = "dashed", "Rickettsia" = "solid")) +
+  manuscript_theme
 
 
 
-  
+
+
+
 ### cant really add raw data because such different y scales?
 
 
