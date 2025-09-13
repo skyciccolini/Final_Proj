@@ -43,7 +43,7 @@ manuscript_theme <- list(
   theme_classic(),
   theme(axis.title = element_text(face = "bold", size = 12),
         axis.text = element_text(face = "italic", size = 10),
-        text = element_text(family = "Calibri")),
+        text = element_text(family = "sans")),
   set.seed(898760))
 
 ```
@@ -493,12 +493,29 @@ ggplot() +
   geom_text(data = PF_Fran_pos,
             aes(x = YEAR, y = positives, label = paste0(round(percent, 1), "%")),
             vjust = -0.5, fontface = "bold", color = "black") +
-  labs(x = "Year", y = "Number of Records") +
+  labs(x = "Year", y = "Ticks Collected") +
   manuscript_theme
 
 
 # plot for rickettsia presence over years
+PF_Rick_pos <- PF_adult_gridMET_2018_2023_BOI |> 
+  group_by(YEAR) |> 
+  summarise(positives = sum(RickettsiaPresence),
+            total = n())
 
+PF_Rick_pos <- PF_Rick_pos |> 
+  mutate(percent = (positives/total) * 100)
+
+
+
+ggplot() +
+  geom_col(data = PF_Rick_pos, aes(x = YEAR, y = total), fill = "grey80") +
+  geom_col(data = PF_Rick_pos, aes(x = YEAR, y = positives), fill = "red") +
+  geom_text(data = PF_Rick_pos,
+            aes(x = YEAR, y = positives, label = paste0(round(percent, 1), "%")),
+            vjust = -0.5, fontface = "bold", color = "black") +
+  labs(x = "Year", y = "Ticks Collected") +
+  manuscript_theme ### probably should denote positives somehow
 
 ```
 
