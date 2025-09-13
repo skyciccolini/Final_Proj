@@ -296,24 +296,27 @@ TP_Rick_Mean_PDSI_preds$ci_upper <- TP_Rick_Mean_PDSI_preds$predicted_prob + 1.9
 
 # plot for reconstruction age with both bacterias
 
-ggplot() +
-  geom_line(data = PF_Fran_Restime_preds, aes(x = Restime, y = predicted_prob),
-            linetype = "dashed") +
-  geom_ribbon(data = PF_Fran_Restime_preds, 
-              aes(x = Restime, y = predicted_prob,
-                  ymin = ci_lower, ymax = ci_upper), alpha = 0.2) +
-  geom_line(data = PF_Rick_Restime_preds, aes(x = Restime, y = predicted_prob)) +
-  geom_ribbon(data = PF_Rick_Restime_preds, 
-              aes(x = Restime, y = predicted_prob,
-                  ymin = ci_lower, ymax = ci_upper), alpha = 0.2) +
+# Add a new column to each dataset
+PF_Fran_Restime_preds$Pathogen <- "Francisella"
+PF_Rick_Restime_preds$Pathogen <- "Rickettsia"
+
+# Combine the datasets
+combined_preds <- rbind(PF_Fran_Restime_preds, PF_Rick_Restime_preds)
+
+# Updated ggplot
+ggplot(combined_preds, aes(x = Restime, y = predicted_prob, linetype = Pathogen)) +
+  geom_line() +
+  geom_ribbon(aes(ymin = ci_lower, ymax = ci_upper), alpha = 0.2) +
   xlab("Reconstruction Year") +
   ylab("Predicted Probability") +
-  theme_classic()
+  theme_classic() +
+  scale_linetype_manual(name = "Pathogen", 
+                        values = c("Francisella" = "dashed", "Rickettsia" = "solid"))
+
+
 
   
 ### cant really add raw data because such different y scales?
-
-### add a legend
 
 
 # plot for fire with both bacterias
