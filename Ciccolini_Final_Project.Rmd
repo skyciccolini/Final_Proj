@@ -300,6 +300,7 @@ TP_Rick_Mean_PDSI_preds$ci_upper <- TP_Rick_Mean_PDSI_preds$predicted_prob + 1.9
 
 ### Manuscript Figures
 
+## Management figs with both bacterias
 ```{r}
 
 # plot for reconstruction age with both bacterias
@@ -330,8 +331,34 @@ ggplot(PF_paths_combined_preds, aes(x = Restime, y = predicted_prob, linetype = 
 
 # plot for fire with both bacterias
 
+# Add a new column to each dataset
+TP_Fran_FireTime_preds$Pathogen <- "Francisella"
+TP_Rick_FireTime_preds$Pathogen <- "Rickettsia"
+
+# Combine the datasets
+TP_paths_combined_preds <- rbind(TP_Fran_FireTime_preds, TP_Rick_FireTime_preds)
+
+# Updated ggplot
+ggplot(TP_paths_combined_preds, aes(x = FireTime, y = predicted_prob, linetype = Pathogen)) +
+  geom_line() +
+  geom_ribbon(aes(ymin = ci_lower, ymax = ci_upper), alpha = 0.2) +
+  xlab("Time Since Fire") +
+  ylab("Predicted Probability") +
+  scale_linetype_manual(name = "Pathogen", 
+                        labels = c(expression(italic("Francisella")),
+                                   expression(italic("Rickettsia"))),
+                        values = c("Francisella" = "dashed", "Rickettsia" = "solid")) +
+  manuscript_theme
 
 
+
+
+```
+
+
+
+## Cliamte figs with both sites with Francisella
+```{r}
 # plot for max summer temp with both sites
 
 # Add a new column to each dataset
@@ -364,10 +391,16 @@ scale_factor <- max(TP_Fran_max_temp_summer_preds$predicted_prob, na.rm = TRUE) 
                 max(PF_Fran_max_temp_summer_preds$predicted_prob, na.rm = TRUE) ## PF has smaller predicted probs
 
 # create rescaled version of PF
-PF_rescaled <- PF_Fran_max_temp_summer_preds
-PF_rescaled$predicted_prob_scaled <- PF_rescaled$predicted_prob * scale_factor
-PF_rescaled$ci_lower_scaled <- PF_rescaled$ci_lower * scale_factor
-PF_rescaled$ci_upper_scaled <- PF_rescaled$ci_upper * scale_factor
+PF_Fran_max_temp_summer_rescaled <- PF_Fran_max_temp_summer_preds
+
+PF_max_temp_summer_rescaled$predicted_prob_scaled <-
+  PF_Fran_max_temp_summer_rescaled$predicted_prob * scale_factor
+
+PF_max_temp_summer_rescaled$ci_lower_scaled <-
+  PF_Fran_max_temp_summer_rescaled$ci_lower * scale_factor
+
+PF_max_temp_summer_rescaled$ci_upper_scaled <-
+  PF_Fran_max_temp_summer_rescaled$ci_upper * scale_factor
 
 # plot again with secondary axis
 ggplot() +
@@ -377,7 +410,7 @@ ggplot() +
               aes(x = max_temp_summer, y = predicted_prob,
                   ymin = ci_lower, ymax = ci_upper, linetype = Site),
               alpha = 0.2) +
-  geom_line(data = PF_rescaled,
+  geom_line(data = PF_max_temp_summer_rescaled,
             aes(x = max_temp_summer, y = predicted_prob_scaled, linetype = Site)) +
   geom_ribbon(data = PF_rescaled,
               aes(x = max_temp_summer, y = predicted_prob_scaled,
@@ -391,7 +424,39 @@ ggplot() +
   manuscript_theme
 
 
+
+
+
+
+
+
 # plot for pdsi
+
+# Add a new column to each dataset
+TP_Fran_Mean_PDSI_preds$Site <- "Remnant"
+PF_Fran_Mean_PDSI_preds$Site <- "Reconstructed"
+
+## we cant rbind here so instead
+ggplot() +
+  geom_line(data = TP_Fran_Mean_PDSI_preds,
+            aes(x = Mean_PDSI, y = predicted_prob, linetype = Site)) +
+  geom_ribbon(data = TP_Fran_Mean_PDSI_preds,
+              aes(x = Mean_PDSI, y = predicted_prob,
+                  ymin = ci_lower, ymax = ci_upper, linetype = Site),
+              alpha = 0.2) +
+  geom_line(data = PF_Fran_Mean_PDSI_preds,
+            aes(x = Mean_PDSI, y = predicted_prob, linetype = Site)) +
+  geom_ribbon(data = PF_Fran_Mean_PDSI_preds,
+              aes(x = Mean_PDSI, y = predicted_prob,
+                  ymin = ci_lower, ymax = ci_upper, linetype = Site),
+              alpha = 0.2) +
+  labs(x = "Average PDSI",
+       y = "Predicted Probability") +
+  manuscript_theme
+
+
+
+
 
 ```
 
@@ -408,13 +473,14 @@ ggplot() +
 
 ### Poster Presentation Figure
 
+## For PFCA
 ```{r}
 
 # plot for francisella positive cases over years
 PF_Fran_pos <- PF_adult_gridMET_2018_2023_BOI |> 
   group_by(YEAR) |> 
   summarise(positives = sum(FrancisellaPresence),
-            total = nrow(PF_adult_gridMET_2018_2023_BOI))
+            total = n())
 
 PF_Fran_pos <- PF_Fran_pos |> 
   mutate(percent = (positives/total) * 100)
@@ -422,7 +488,14 @@ PF_Fran_pos <- PF_Fran_pos |>
 
 
 ggplot() +
-  geom_point(data = PF_Fran_pos, aes(x = YEAR, y = percent)) #### HEY YOU WERE HERE
+  geom_col(data = PF_Fran_pos, aes(x = YEAR, y = total), fill = "grey80") +
+  geom_col(data = PF_Fran_pos, aes(x = YEAR, y = positives), fill = "red") +
+  geom_text(data = PF_Fran_pos,
+            aes(x = YEAR, y = positives, label = paste0(round(percent, 1), "%")),
+            vjust = -0.5, fontface = "bold", color = "black") +
+  labs(x = "Year", y = "Number of Records") +
+  manuscript_theme
+
 
 # plot for rickettsia presence over years
 
