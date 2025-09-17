@@ -52,43 +52,35 @@ manuscript_theme <- list(
 
 ```{r}
 
-PF_Fran_climate_Restime_glm <- glm(data = PF_adult_gridMET_2018_2023_BOI, family = binomial,
-                                  FrancisellaPresence~Restime + max_temp_summer : Mean_PDSI)
-
-TP_Fran_climate_FireTime_glm <- glm(data = TP_adult_gridMET_2018_2023_BOI, family = binomial,
-                                    FrancisellaPresence~FireTime + max_temp_summer : Mean_PDSI)
-
-### update models with the ones below
-TP_Fran_Res_climate_int_spp_glm <- glm(data = TP_adult_gridMET_2018_2023_BOI, family = binomial,
-                                       FrancisellaPresence ~ FireTime*max_temp_summer + FireTime*Mean_PDSI + 
-                                         max_temp_summer:Mean_PDSI + SPECIES)
-
-TP_Rick_Res_climate_int_spp_glm <- glm(data = TP_adult_gridMET_2018_2023_BOI, family = binomial,
-                                       RickettsiaPresence ~ FireTime*max_temp_summer + FireTime*Mean_PDSI + 
-                                         max_temp_summer:Mean_PDSI + SPECIES)
-
 PF_Fran_Res_climate_int_spp_glm <- glm(data = PF_adult_gridMET_2018_2023_BOI, family = binomial,
                                        FrancisellaPresence ~ Restime*max_temp_summer + Restime*Mean_PDSI + 
                                          max_temp_summer:Mean_PDSI + SPECIES)
 
-PF_Rick_Res_climate_int_spp_glm <- glm(data = PF_adult_gridMET_2018_2023_BOI, family = binomial,
-                                      RickettsiaPresence ~ Restime*max_temp_summer + Restime*Mean_PDSI + 
-                                        max_temp_summer:Mean_PDSI + SPECIES)
+
+TP_Fran_Res_climate_int_spp_glm <- glm(data = TP_adult_gridMET_2018_2023_BOI, family = binomial,
+                                       FrancisellaPresence ~ FireTime*max_temp_summer + FireTime*Mean_PDSI + 
+                                         max_temp_summer:Mean_PDSI + SPECIES)
 
 
 
 
+# For A americanum----
 
+# split data by spp
+
+PF_Fran_Restime_AA <- PF_adult_gridMET_2018_2023_BOI |> 
+  filter(SPECIES == "AA")
 
 # predicted values
-PF_Fran_Restime_preds <- data.frame(
-  Restime = seq(min(PF_adult_gridMET_2018_2023_BOI$Restime), max(PF_adult_gridMET_2018_2023_BOI$Restime), length.out = 100),
-  max_temp_summer = mean(PF_adult_gridMET_2018_2023_BOI$max_temp_summer),
-  Mean_PDSI = mean(PF_adult_gridMET_2018_2023_BOI$Mean_PDSI)
+PF_Fran_Restime_AA_preds <- data.frame(
+  Restime = seq(min(PF_Fran_Restime_AA$Restime), max(PF_Fran_Restime_AA$Restime), length.out = 100),
+  max_temp_summer = mean(PF_Fran_Restime_AA$max_temp_summer),
+  Mean_PDSI = mean(PF_Fran_Restime_AA$Mean_PDSI),
+  SPECIES = rep("AA", 100)
 )
 
-PF_Fran_Restime_preds$predicted_prob <- predict(PF_Fran_climate_Restime_glm, 
-                                                newdata = PF_Fran_Restime_preds, type = "response")
+PF_Fran_Restime_AA_preds$predicted_prob <- predict(PF_Fran_Res_climate_int_spp_glm, 
+                                                newdata = PF_Fran_Restime_AA_preds, type = "response") ### you need to split predictions for everything into AA and DV
 
 #add std error
 PF_Fran_Restime_preds$std_error <- with(PF_Fran_Restime_preds, sd(predicted_prob) / sqrt(length(predicted_prob)))
@@ -105,7 +97,7 @@ PF_Fran_max_temp_summer_preds <- data.frame(
 )
 
 # Add predicted probabilities
-PF_Fran_max_temp_summer_preds$predicted_prob <- predict(PF_Fran_climate_Restime_glm, 
+PF_Fran_max_temp_summer_preds$predicted_prob <- predict(PF_Fran_Res_climate_int_spp_glm, 
                                                         newdata = PF_Fran_max_temp_summer_preds, type = "response")
 
 #add std error
@@ -123,7 +115,7 @@ PF_Fran_Mean_PDSI_preds <- data.frame(
 )
 
 # Add predicted probabilities
-PF_Fran_Mean_PDSI_preds$predicted_prob <- predict(PF_Fran_climate_Restime_glm, 
+PF_Fran_Mean_PDSI_preds$predicted_prob <- predict(PF_Fran_Res_climate_int_spp_glm, 
                                                   newdata = PF_Fran_Mean_PDSI_preds, type = "response")
 #add std error
 
@@ -143,7 +135,7 @@ TP_Fran_FireTime_preds <- data.frame(
   Mean_PDSI = mean(TP_adult_gridMET_2018_2023_BOI$Mean_PDSI)
 )
 
-TP_Fran_FireTime_preds$predicted_prob <- predict(TP_Fran_climate_FireTime_glm, 
+TP_Fran_FireTime_preds$predicted_prob <- predict(TP_Fran_Res_climate_int_spp_glm, 
                                                  newdata = TP_Fran_FireTime_preds, type = "response")
 #add std error
 
@@ -161,7 +153,7 @@ TP_Fran_max_temp_summer_preds <- data.frame(
 )
 
 # Add predicted probabilities
-TP_Fran_max_temp_summer_preds$predicted_prob <- predict(TP_Fran_climate_FireTime_glm, 
+TP_Fran_max_temp_summer_preds$predicted_prob <- predict(TP_Fran_Res_climate_int_spp_glm, 
                                                         newdata = TP_Fran_max_temp_summer_preds, type = "response")
 #add std error
 
@@ -179,7 +171,7 @@ TP_Fran_Mean_PDSI_preds <- data.frame(
 )
 
 # Add predicted probabilities
-TP_Fran_Mean_PDSI_preds$predicted_prob <- predict(TP_Fran_climate_FireTime_glm, 
+TP_Fran_Mean_PDSI_preds$predicted_prob <- predict(TP_Fran_Res_climate_int_spp_glm, 
                                                   newdata = TP_Fran_Mean_PDSI_preds, type = "response")
 #add std error
 
@@ -197,11 +189,13 @@ TP_Fran_Mean_PDSI_preds$ci_upper <- TP_Fran_Mean_PDSI_preds$predicted_prob + 1.9
 
 ```{r}
 
-PF_Rick_climate_Restime_glm <- glm(data = PF_adult_gridMET_2018_2023_BOI, family = binomial,
-                                  RickettsiaPresence~Restime + max_temp_summer : Mean_PDSI)
+PF_Rick_Res_climate_int_spp_glm <- glm(data = PF_adult_gridMET_2018_2023_BOI, family = binomial,
+                                      RickettsiaPresence ~ Restime*max_temp_summer + Restime*Mean_PDSI + 
+                                        max_temp_summer:Mean_PDSI + SPECIES)
 
-TP_Rick_climate_FireTime_glm <- glm(data = TP_adult_gridMET_2018_2023_BOI, family = binomial,
-                                    RickettsiaPresence~FireTime + max_temp_summer : Mean_PDSI)
+TP_Rick_Res_climate_int_spp_glm <- glm(data = TP_adult_gridMET_2018_2023_BOI, family = binomial,
+                                       RickettsiaPresence ~ FireTime*max_temp_summer + FireTime*Mean_PDSI + 
+                                         max_temp_summer:Mean_PDSI + SPECIES)
 
 
 #plot predicted values
@@ -211,7 +205,7 @@ PF_Rick_Restime_preds <- data.frame(
   Mean_PDSI = mean(PF_adult_gridMET_2018_2023_BOI$Mean_PDSI)
 )
 
-PF_Rick_Restime_preds$predicted_prob <- predict(PF_Rick_climate_Restime_glm, 
+PF_Rick_Restime_preds$predicted_prob <- predict(PF_Rick_Res_climate_int_spp_glm, 
                                                 newdata = PF_Rick_Restime_preds, type = "response")
 
 #add std error
@@ -230,7 +224,7 @@ PF_Rick_max_temp_summer_preds <- data.frame(
 )
 
 # Add predicted probabilities
-PF_Rick_max_temp_summer_preds$predicted_prob <- predict(PF_Rick_climate_Restime_glm, 
+PF_Rick_max_temp_summer_preds$predicted_prob <- predict(PF_Rick_Res_climate_int_spp_glm, 
                                                         newdata = PF_Rick_max_temp_summer_preds, type = "response")
 
 #add std error
@@ -248,7 +242,7 @@ PF_Rick_Mean_PDSI_preds <- data.frame(
 )
 
 # Add predicted probabilities
-PF_Rick_Mean_PDSI_preds$predicted_prob <- predict(PF_Rick_climate_Restime_glm, 
+PF_Rick_Mean_PDSI_preds$predicted_prob <- predict(PF_Rick_Res_climate_int_spp_glm, 
                                                   newdata = PF_Rick_Mean_PDSI_preds, type = "response")
 
 
@@ -266,7 +260,7 @@ TP_Rick_FireTime_preds <- data.frame(
   Mean_PDSI = mean(TP_adult_gridMET_2018_2023_BOI$Mean_PDSI)
 )
 
-TP_Rick_FireTime_preds$predicted_prob <- predict(TP_Rick_climate_FireTime_glm, 
+TP_Rick_FireTime_preds$predicted_prob <- predict(TP_Rick_Res_climate_int_spp_glm, 
                                                  newdata = TP_Rick_FireTime_preds, type = "response")
 
 #add std error
@@ -284,7 +278,7 @@ TP_Rick_max_temp_summer_preds <- data.frame(
 )
 
 # Add predicted probabilities
-TP_Rick_max_temp_summer_preds$predicted_prob <- predict(TP_Rick_climate_FireTime_glm, 
+TP_Rick_max_temp_summer_preds$predicted_prob <- predict(TP_Rick_Res_climate_int_spp_glm, 
                                                         newdata = TP_Rick_max_temp_summer_preds, type = "response")
 #add std error
 
@@ -302,7 +296,7 @@ TP_Rick_Mean_PDSI_preds <- data.frame(
 )
 
 # Add predicted probabilities
-TP_Rick_Mean_PDSI_preds$predicted_prob <- predict(TP_Rick_climate_FireTime_glm, 
+TP_Rick_Mean_PDSI_preds$predicted_prob <- predict(TP_Rick_Res_climate_int_spp_glm, 
                                                   newdata = TP_Rick_Mean_PDSI_preds, type = "response")
 #add std error
 
