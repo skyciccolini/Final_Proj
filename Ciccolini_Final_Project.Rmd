@@ -58,6 +58,26 @@ PF_Fran_climate_Restime_glm <- glm(data = PF_adult_gridMET_2018_2023_BOI, family
 TP_Fran_climate_FireTime_glm <- glm(data = TP_adult_gridMET_2018_2023_BOI, family = binomial,
                                     FrancisellaPresence~FireTime + max_temp_summer : Mean_PDSI)
 
+### update models with the ones below
+TP_Fran_Res_climate_int_spp_glm <- glm(data = TP_adult_gridMET_2018_2023_BOI, family = binomial,
+                                       FrancisellaPresence ~ FireTime*max_temp_summer + FireTime*Mean_PDSI + 
+                                         max_temp_summer:Mean_PDSI + SPECIES)
+
+TP_Rick_Res_climate_int_spp_glm <- glm(data = TP_adult_gridMET_2018_2023_BOI, family = binomial,
+                                       RickettsiaPresence ~ FireTime*max_temp_summer + FireTime*Mean_PDSI + 
+                                         max_temp_summer:Mean_PDSI + SPECIES)
+
+PF_Fran_Res_climate_int_spp_glm <- glm(data = PF_adult_gridMET_2018_2023_BOI, family = binomial,
+                                       FrancisellaPresence ~ Restime*max_temp_summer + Restime*Mean_PDSI + 
+                                         max_temp_summer:Mean_PDSI + SPECIES)
+
+PF_Rick_Res_climate_int_spp_glm <- glm(data = PF_adult_gridMET_2018_2023_BOI, family = binomial,
+                                      RickettsiaPresence ~ Restime*max_temp_summer + Restime*Mean_PDSI + 
+                                        max_temp_summer:Mean_PDSI + SPECIES)
+
+
+
+
 
 
 # predicted values
@@ -313,7 +333,7 @@ PF_Rick_Restime_preds$Pathogen <- "Rickettsia"
 PF_paths_combined_preds <- rbind(PF_Fran_Restime_preds, PF_Rick_Restime_preds)
 
 # Updated ggplot
-ggplot(PF_paths_combined_preds, aes(x = Restime, y = predicted_prob, linetype = Pathogen)) +
+recon <- ggplot(PF_paths_combined_preds, aes(x = Restime, y = predicted_prob, linetype = Pathogen)) +
   geom_line() +
   geom_ribbon(aes(ymin = ci_lower, ymax = ci_upper), alpha = 0.2) +
   xlab("Reconstruction Year") +
@@ -324,7 +344,8 @@ ggplot(PF_paths_combined_preds, aes(x = Restime, y = predicted_prob, linetype = 
                         values = c("Francisella" = "dashed", "Rickettsia" = "solid")) +
   manuscript_theme
 
-
+ggsave("Figs/Recon.jpg", plot = recon, units = "in",
+       width = 6, height = 4)
 
 ### cant really add raw data because such different y scales of predicted plots and raw data?
 
@@ -339,7 +360,7 @@ TP_Rick_FireTime_preds$Pathogen <- "Rickettsia"
 TP_paths_combined_preds <- rbind(TP_Fran_FireTime_preds, TP_Rick_FireTime_preds)
 
 # Updated ggplot
-ggplot(TP_paths_combined_preds, aes(x = FireTime, y = predicted_prob, linetype = Pathogen)) +
+fire <- ggplot(TP_paths_combined_preds, aes(x = FireTime, y = predicted_prob, linetype = Pathogen)) +
   geom_line() +
   geom_ribbon(aes(ymin = ci_lower, ymax = ci_upper), alpha = 0.2) +
   xlab("Time Since Fire") +
@@ -351,7 +372,8 @@ ggplot(TP_paths_combined_preds, aes(x = FireTime, y = predicted_prob, linetype =
   manuscript_theme
 
 
-
+ggsave("Figs/Fire.jpg", plot = fire, units = "in",
+       width = 6, height = 4)
 
 ```
 
@@ -366,7 +388,7 @@ TP_Fran_max_temp_summer_preds$Site <- "Remnant"
 PF_Fran_max_temp_summer_preds$Site <- "Reconstructed"
 
 ## we cant rbind here so instead
-ggplot() +
+sum <- ggplot() +
   geom_line(data = TP_Fran_max_temp_summer_preds,
             aes(x = max_temp_summer, y = predicted_prob, linetype = Site)) +
   geom_ribbon(data = TP_Fran_max_temp_summer_preds,
@@ -383,6 +405,8 @@ ggplot() +
        y = "Predicted Probability") +
   manuscript_theme
 
+ggsave("Figs/Sum.jpg", plot = sum, units = "in",
+       width = 6, height = 4)
 
 # lets try to make a secondary axis
 
@@ -393,26 +417,26 @@ scale_factor <- max(TP_Fran_max_temp_summer_preds$predicted_prob, na.rm = TRUE) 
 # create rescaled version of PF
 PF_Fran_max_temp_summer_rescaled <- PF_Fran_max_temp_summer_preds
 
-PF_max_temp_summer_rescaled$predicted_prob_scaled <-
+PF_Fran_max_temp_summer_rescaled$predicted_prob_scaled <-
   PF_Fran_max_temp_summer_rescaled$predicted_prob * scale_factor
 
-PF_max_temp_summer_rescaled$ci_lower_scaled <-
+PF_Fran_max_temp_summer_rescaled$ci_lower_scaled <-
   PF_Fran_max_temp_summer_rescaled$ci_lower * scale_factor
 
-PF_max_temp_summer_rescaled$ci_upper_scaled <-
+PF_Fran_max_temp_summer_rescaled$ci_upper_scaled <-
   PF_Fran_max_temp_summer_rescaled$ci_upper * scale_factor
 
 # plot again with secondary axis
-ggplot() +
+sum_2 <- ggplot() +
   geom_line(data = TP_Fran_max_temp_summer_preds,
             aes(x = max_temp_summer, y = predicted_prob, linetype = Site)) +
   geom_ribbon(data = TP_Fran_max_temp_summer_preds,
               aes(x = max_temp_summer, y = predicted_prob,
                   ymin = ci_lower, ymax = ci_upper, linetype = Site),
               alpha = 0.2) +
-  geom_line(data = PF_max_temp_summer_rescaled,
+  geom_line(data = PF_Fran_max_temp_summer_rescaled,
             aes(x = max_temp_summer, y = predicted_prob_scaled, linetype = Site)) +
-  geom_ribbon(data = PF_rescaled,
+  geom_ribbon(data = PF_Fran_max_temp_summer_rescaled,
               aes(x = max_temp_summer, y = predicted_prob_scaled,
                   ymin = ci_lower_scaled, ymax = ci_upper_scaled, linetype = Site),
               alpha = 0.2) +
@@ -424,7 +448,8 @@ ggplot() +
   manuscript_theme
 
 
-
+ggsave("Figs/sum2.jpg", plot = sum_2, units = "in",
+       width = 6, height = 4)
 
 
 
@@ -437,7 +462,7 @@ TP_Fran_Mean_PDSI_preds$Site <- "Remnant"
 PF_Fran_Mean_PDSI_preds$Site <- "Reconstructed"
 
 ## we cant rbind here so instead
-ggplot() +
+pdsi <- ggplot() +
   geom_line(data = TP_Fran_Mean_PDSI_preds,
             aes(x = Mean_PDSI, y = predicted_prob, linetype = Site)) +
   geom_ribbon(data = TP_Fran_Mean_PDSI_preds,
@@ -454,7 +479,8 @@ ggplot() +
        y = "Predicted Probability") +
   manuscript_theme
 
-
+ggsave("Figs/pdsi.jpg", plot = pdsi, units = "in",
+       width = 6, height = 4)
 
 
 
@@ -466,14 +492,55 @@ ggplot() +
 ```{r}
 # map of field sites
 
+library(ggmap)
 
+# create map with prairie locs
+locs <- tribble(~ lat, ~ lon, ~ ID,
+                -91.7408, 38.8922, "Prairie Fork",
+                -91.9902, 38.949, "Tucker")
+
+# Create bounding box for locations
+sbbox <- make_bbox(lon = locs$lon,
+                   lat = locs$lat,
+                   f = 0.25) # Expansion factor
+
+# Download map
+sq_map <- get_stamenmap(bbox = sbbox,
+                        maptype = "terrain")
+
+p <- ggmap(sq_map) + 
+  geom_point(data = Locations,
+             mapping = aes(x = lon, y = lat),
+             color = "red",
+             size = 3) +
+  labs(x = "Longitude", y = "Latitude")
+p
+
+
+p +
+  annotate(geom = "text",
+           x = -92.45,
+           y = 39.35,
+           label = "Field Sites on the Missouri River",
+           size = 8) +
+  geom_text_repel(data = Locations,
+                  mapping = aes(x = lon, y = lat, label = ID),
+                  box.padding = 1,
+                  seed = 431579)
+
+# create map of US
+
+
+
+
+# combine as inset
 ```
 
 
 
 ### Poster Presentation Figure
 
-## For PFCA
+## PFCA positivity
 ```{r}
 
 # plot for francisella positive cases over years
@@ -487,7 +554,7 @@ PF_Fran_pos <- PF_Fran_pos |>
 
 
 
-ggplot() +
+PF_Fran_pos <- ggplot() +
   geom_col(data = PF_Fran_pos, aes(x = YEAR, y = total), fill = "grey80") +
   geom_col(data = PF_Fran_pos, aes(x = YEAR, y = positives), fill = "red") +
   geom_text(data = PF_Fran_pos,
@@ -496,6 +563,8 @@ ggplot() +
   labs(x = "Year", y = "Ticks Collected") +
   manuscript_theme
 
+ggsave("Figs/PF_Fran_pos.jpg", plot = PF_Fran_pos, units = "in",
+       width = 6, height = 4)
 
 # plot for rickettsia presence over years
 PF_Rick_pos <- PF_adult_gridMET_2018_2023_BOI |> 
@@ -508,7 +577,7 @@ PF_Rick_pos <- PF_Rick_pos |>
 
 
 
-ggplot() +
+PF_Rick_pos <- ggplot() +
   geom_col(data = PF_Rick_pos, aes(x = YEAR, y = total), fill = "grey80") +
   geom_col(data = PF_Rick_pos, aes(x = YEAR, y = positives), fill = "red") +
   geom_text(data = PF_Rick_pos,
@@ -517,11 +586,9 @@ ggplot() +
   labs(x = "Year", y = "Ticks Collected") +
   manuscript_theme ### probably should denote positives somehow
 
+ggsave("Figs/PF_rick_pos.jpg", plot = PF_Rick_pos, units = "in",
+       width = 6, height = 4)
 ```
-
-
-
-
 
 
 
