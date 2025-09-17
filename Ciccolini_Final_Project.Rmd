@@ -606,26 +606,43 @@ TP_Rick_Mean_PDSI_DV_preds$ci_upper <- TP_Rick_Mean_PDSI_DV_preds$predicted_prob
 
 ## Management figs with both bacterias
 ```{r}
-
-# A americanum plot for reconstruction age with both bacterias
+# plot for reconstruction age with both bacterias faceted by SPP ----
 
 # Add a new column to each dataset
-PF_Rick_Restime_AA_preds$Pathogen <- "Francisella"
+PF_Fran_Restime_AA_preds$Pathogen <- "Francisella"
+PF_Fran_Restime_AA_preds$Species <- "A. americanum"
+
 PF_Rick_Restime_AA_preds$Pathogen <- "Rickettsia"
+PF_Rick_Restime_AA_preds$Species <- "A. americanum"
+
+PF_Fran_Restime_DV_preds$Pathogen <- "Francisella"
+PF_Fran_Restime_DV_preds$Species <- "D. variabilis"
+
+PF_Rick_Restime_DV_preds$Pathogen <- "Rickettsia"
+PF_Rick_Restime_DV_preds$Species <- "D. variabilis"
+
 
 # Combine the datasets
-PF_paths_AA_combined_preds <- rbind(PF_Rick_Restime_AA_preds, PF_Rick_Restime_AA_preds)
+PF_paths_combined_preds <- rbind(
+  PF_Fran_Restime_AA_preds,
+  PF_Rick_Restime_AA_preds,
+  PF_Fran_Restime_DV_preds,
+  PF_Rick_Restime_DV_preds
+)
+
 
 # Updated ggplot
-recon <- ggplot(PF_paths_AA_combined_preds, aes(x = Restime, y = predicted_prob, linetype = Pathogen)) +
+recon <- ggplot(PF_paths_combined_preds, aes(x = Restime, y = predicted_prob, linetype = Pathogen)) +
   geom_line() +
   geom_ribbon(aes(ymin = ci_lower, ymax = ci_upper), alpha = 0.2) +
   xlab("Reconstruction Year") +
   ylab("Predicted Probability") +
-  scale_linetype_manual(name = "Pathogen", 
-                        labels = c(expression(italic("Francisella")),
-                                   expression(italic("Rickettsia"))),
-                        values = c("Francisella" = "dashed", "Rickettsia" = "solid")) +
+  scale_linetype_manual(
+    name = "Pathogen",
+    labels = c(expression(italic("Francisella")), expression(italic("Rickettsia"))),
+    values = c("Francisella" = "dashed", "Rickettsia" = "solid")
+  ) +
+  facet_wrap(~Species) +
   manuscript_theme
 
 ggsave("Figs/Recon.jpg", plot = recon, units = "in",
@@ -640,11 +657,28 @@ ggsave("Figs/Recon.jpg", plot = recon, units = "in",
 TP_Fran_FireTime_AA_preds$Pathogen <- "Francisella"
 TP_Rick_FireTime_AA_preds$Pathogen <- "Rickettsia"
 
+TP_Fran_FireTime_AA_preds$Pathogen <- "Francisella"
+TP_Fran_FireTime_AA_preds$Species <- "A. americanum"
+
+TP_Rick_FireTime_AA_preds$Pathogen <- "Rickettsia"
+TP_Rick_FireTime_AA_preds$Species <- "A. americanum"
+
+TP_Fran_FireTime_DV_preds$Pathogen <- "Francisella"
+TP_Fran_FireTime_DV_preds$Species <- "D. variabilis"
+
+TP_Rick_FireTime_DV_preds$Pathogen <- "Rickettsia"
+TP_Rick_FireTime_DV_preds$Species <- "D. variabilis"
+
 # Combine the datasets
-TP_paths_AA_combined_preds <- rbind(TP_Fran_FireTime_AA_preds, TP_Rick_FireTime_AA_preds)
+TP_paths_combined_preds <- rbind(
+  TP_Fran_FireTime_AA_preds,
+  TP_Rick_FireTime_AA_preds,
+  TP_Fran_FireTime_DV_preds,
+  TP_Rick_FireTime_DV_preds
+)
 
 # Updated ggplot
-fire <- ggplot(TP_paths_AA_combined_preds, aes(x = FireTime, y = predicted_prob, linetype = Pathogen)) +
+fire <- ggplot(TP_paths_combined_preds, aes(x = FireTime, y = predicted_prob, linetype = Pathogen)) +
   geom_line() +
   geom_ribbon(aes(ymin = ci_lower, ymax = ci_upper), alpha = 0.2) +
   xlab("Time Since Fire") +
@@ -653,118 +687,119 @@ fire <- ggplot(TP_paths_AA_combined_preds, aes(x = FireTime, y = predicted_prob,
                         labels = c(expression(italic("Francisella")),
                                    expression(italic("Rickettsia"))),
                         values = c("Francisella" = "dashed", "Rickettsia" = "solid")) +
+  facet_wrap(~SPECIES) +
   manuscript_theme
 
 
 ggsave("Figs/Fire.jpg", plot = fire, units = "in",
        width = 6, height = 4)
 
+
 ```
 
-### SKY PICK UP HERE
 
 ## Cliamte figs with both sites with Francisella
 ```{r}
-# plot for max summer temp with both sites
+# plot for max summer temp with both sites----
+
+library(ggplot2)
 
 # Add a new column to each dataset
-TP_Fran_max_temp_summer_preds$Site <- "Remnant"
-PF_Fran_max_temp_summer_preds$Site <- "Reconstructed"
+TP_Fran_max_temp_summer_AA_preds$Site <- "Remnant"
+PF_Fran_max_temp_summer_AA_preds$Site <- "Reconstructed"
 
-## we cant rbind here so instead
+TP_Fran_max_temp_summer_DV_preds$Site <- "Remnant"
+PF_Fran_max_temp_summer_DV_preds$Site <- "Reconstructed"
+
+TP_Fran_max_temp_summer_AA_preds$SPECIES <- "A. americanum"
+PF_Fran_max_temp_summer_AA_preds$SPECIES <- "A. americanum"
+
+TP_Rick_max_temp_summer_DV_preds <- "D. variabilis"
+PF_Rick_max_temp_summer_DV_preds <- "D. variabilis"
+
 sum <- ggplot() +
-  geom_line(data = TP_Fran_max_temp_summer_preds,
+  # TP species
+  geom_line(data = TP_Fran_max_temp_summer_AA_preds,
             aes(x = max_temp_summer, y = predicted_prob, linetype = Site)) +
-  geom_ribbon(data = TP_Fran_max_temp_summer_preds,
+  geom_ribbon(data = TP_Fran_max_temp_summer_AA_preds,
               aes(x = max_temp_summer, y = predicted_prob,
                   ymin = ci_lower, ymax = ci_upper, linetype = Site),
               alpha = 0.2) +
-  geom_line(data = PF_Fran_max_temp_summer_preds,
+  # PF species
+  geom_line(data = PF_Fran_max_temp_summer_AA_preds,
             aes(x = max_temp_summer, y = predicted_prob, linetype = Site)) +
-  geom_ribbon(data = PF_Fran_max_temp_summer_preds,
+  geom_ribbon(data = PF_Fran_max_temp_summer_AA_preds,
+              aes(x = max_temp_summer, y = predicted_prob,
+                  ymin = ci_lower, ymax = ci_upper, linetype = Site),
+              alpha = 0.2) +
+  # DV species
+  geom_line(data = TP_Fran_max_temp_summer_DV_preds,
+            aes(x = max_temp_summer, y = predicted_prob, linetype = Site)) +
+  geom_ribbon(data = PF_Fran_max_temp_summer_DV_preds,
               aes(x = max_temp_summer, y = predicted_prob,
                   ymin = ci_lower, ymax = ci_upper, linetype = Site),
               alpha = 0.2) +
   labs(x = expression("Nymphal Questing Max Summer Temperature (" * ~degree * C * ")"),
        y = "Predicted Probability") +
-  manuscript_theme
+  manuscript_theme +
+  facet_wrap(~SPECIES)
+
 
 ggsave("Figs/Sum.jpg", plot = sum, units = "in",
        width = 6, height = 4)
 
-# lets try to make a secondary axis
-
-# create a scaling factor in each dfs
-scale_factor <- max(TP_Fran_max_temp_summer_preds$predicted_prob, na.rm = TRUE) / ## TP has bigger predicted probs
-                max(PF_Fran_max_temp_summer_preds$predicted_prob, na.rm = TRUE) ## PF has smaller predicted probs
-
-# create rescaled version of PF
-PF_Fran_max_temp_summer_rescaled <- PF_Fran_max_temp_summer_preds
-
-PF_Fran_max_temp_summer_rescaled$predicted_prob_scaled <-
-  PF_Fran_max_temp_summer_rescaled$predicted_prob * scale_factor
-
-PF_Fran_max_temp_summer_rescaled$ci_lower_scaled <-
-  PF_Fran_max_temp_summer_rescaled$ci_lower * scale_factor
-
-PF_Fran_max_temp_summer_rescaled$ci_upper_scaled <-
-  PF_Fran_max_temp_summer_rescaled$ci_upper * scale_factor
-
-# plot again with secondary axis
-sum_2 <- ggplot() +
-  geom_line(data = TP_Fran_max_temp_summer_preds,
-            aes(x = max_temp_summer, y = predicted_prob, linetype = Site)) +
-  geom_ribbon(data = TP_Fran_max_temp_summer_preds,
-              aes(x = max_temp_summer, y = predicted_prob,
-                  ymin = ci_lower, ymax = ci_upper, linetype = Site),
-              alpha = 0.2) +
-  geom_line(data = PF_Fran_max_temp_summer_rescaled,
-            aes(x = max_temp_summer, y = predicted_prob_scaled, linetype = Site)) +
-  geom_ribbon(data = PF_Fran_max_temp_summer_rescaled,
-              aes(x = max_temp_summer, y = predicted_prob_scaled,
-                  ymin = ci_lower_scaled, ymax = ci_upper_scaled, linetype = Site),
-              alpha = 0.2) +
-  scale_y_continuous(
-    name = "Predicted Probability (Remnant)", ## name of primary y
-    sec.axis = sec_axis(~ . / scale_factor, name = "Predicted Probability (Reconstructed)") ## name of secondary y
-  ) +
-  labs(x = expression("Nymphal Questing Max Summer Temperature (" * ~degree * C * ")")) +
-  manuscript_theme
-
-
-ggsave("Figs/sum2.jpg", plot = sum_2, units = "in",
-       width = 6, height = 4)
 
 
 
-
-
-# plot for pdsi
+# plot for pdsi at both study sites ----
 
 # Add a new column to each dataset
-TP_Fran_Mean_PDSI_preds$Site <- "Remnant"
-PF_Fran_Mean_PDSI_preds$Site <- "Reconstructed"
+TP_Fran_Mean_PDSI_AA_preds$Site <- "Remnant"
+PF_Fran_Mean_PDSI_AA_preds$Site <- "Reconstructed"
 
-## we cant rbind here so instead
+TP_Fran_Mean_PDSI_DV_preds$Site <- "Remnant"
+PF_Fran_Mean_PDSI_DV_preds$Site <- "Reconstructed"
+
+TP_Fran_Mean_PDSI_AA_preds$SPECIES <- "A. americanum"
+PF_Fran_Mean_PDSI_AA_preds$SPECIES <- "A. americanum"
+
+TP_Fran_Mean_PDSI_DV_preds$SPECIES <- "D. variabilis"
+PF_Fran_Mean_PDSI_DV_preds$SPECIES <- "D. variabilis"
+
+
 pdsi <- ggplot() +
-  geom_line(data = TP_Fran_Mean_PDSI_preds,
+  # TP species
+  geom_line(data = TP_Fran_Mean_PDSI_AA_preds,
             aes(x = Mean_PDSI, y = predicted_prob, linetype = Site)) +
-  geom_ribbon(data = TP_Fran_Mean_PDSI_preds,
+  geom_ribbon(data = TP_Fran_Mean_PDSI_AA_preds,
               aes(x = Mean_PDSI, y = predicted_prob,
                   ymin = ci_lower, ymax = ci_upper, linetype = Site),
               alpha = 0.2) +
-  geom_line(data = PF_Fran_Mean_PDSI_preds,
+  # PF species
+  geom_line(data = PF_Fran_Mean_PDSI_AA_preds,
             aes(x = Mean_PDSI, y = predicted_prob, linetype = Site)) +
-  geom_ribbon(data = PF_Fran_Mean_PDSI_preds,
+  geom_ribbon(data = PF_Fran_Mean_PDSI_AA_preds,
               aes(x = Mean_PDSI, y = predicted_prob,
                   ymin = ci_lower, ymax = ci_upper, linetype = Site),
               alpha = 0.2) +
-  labs(x = "Average PDSI",
+  # DV species
+  geom_line(data = TP_Fran_Mean_PDSI_DV_preds,
+            aes(x = Mean_PDSI, y = predicted_prob, linetype = Site)) +
+  geom_ribbon(data = PF_Fran_Mean_PDSI_DV_preds,
+              aes(x = Mean_PDSI, y = predicted_prob,
+                  ymin = ci_lower, ymax = ci_upper, linetype = Site),
+              alpha = 0.2) +
+  labs(x = "PDSI",
        y = "Predicted Probability") +
-  manuscript_theme
+  manuscript_theme +
+  facet_wrap(~SPECIES)
+
 
 ggsave("Figs/pdsi.jpg", plot = pdsi, units = "in",
        width = 6, height = 4)
+
+
+
 
 
 
