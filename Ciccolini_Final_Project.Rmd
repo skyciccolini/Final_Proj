@@ -823,12 +823,15 @@ sbbox <- make_bbox(lon = locs$lon,
                    lat = locs$lat,
                    f = 0.25) # Expansion factor
 
+bbox <- c(left = -92.05255, bottom = 38.87800, right = -91.67845,
+         top = 38.96320)
+
 # Download map
-sq_map <- get_stamenmap(bbox = sbbox,
-                        maptype = "terrain")
+sq_map <- get_stadiamap(bbox,
+                        maptype = "stamen_terrain")### this is not working
 
 p <- ggmap(sq_map) + 
-  geom_point(data = Locations,
+  geom_point(data = locs,
              mapping = aes(x = lon, y = lat),
              color = "red",
              size = 3) +
@@ -848,7 +851,6 @@ p +
                   seed = 431579)
 
 # create map of US
-
 
 
 
