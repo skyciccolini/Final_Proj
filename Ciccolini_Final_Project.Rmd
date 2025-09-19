@@ -687,7 +687,7 @@ fire <- ggplot(TP_paths_combined_preds, aes(x = FireTime, y = predicted_prob, li
                         labels = c(expression(italic("Francisella")),
                                    expression(italic("Rickettsia"))),
                         values = c("Francisella" = "dashed", "Rickettsia" = "solid")) +
-  facet_wrap(~SPECIES) +
+  facet_wrap(~Species) +
   manuscript_theme
 
 
@@ -713,6 +713,10 @@ PF_Fran_max_temp_summer_DV_preds$Site <- "Reconstructed"
 
 TP_Fran_max_temp_summer_AA_preds$SPECIES <- "A. americanum"
 PF_Fran_max_temp_summer_AA_preds$SPECIES <- "A. americanum"
+
+TP_Fran_max_temp_summer_DV_preds$SPECIES <- "D. variabilis"
+PF_Fran_max_temp_summer_DV_preds$SPECIES <- "D. variabilis"
+
 
 TP_Rick_max_temp_summer_DV_preds <- "D. variabilis"
 PF_Rick_max_temp_summer_DV_preds <- "D. variabilis"
