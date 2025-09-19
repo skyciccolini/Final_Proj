@@ -815,50 +815,50 @@ ggsave("Figs/pdsi.jpg", plot = pdsi, units = "in",
 ```{r}
 # map of field sites
 
-library(ggmap)
+library(sf)
 
 # create map with prairie locs
 locs <- tribble(~ lat, ~ lon, ~ ID,
                 -91.7408, 38.8922, "Prairie Fork",
                 -91.9902, 38.949, "Tucker")
 
-# Create bounding box for locations
-sbbox <- make_bbox(lon = locs$lon,
-                   lat = locs$lat,
-                   f = 0.25) # Expansion factor
-
-bbox <- c(left = -92.05255, bottom = 38.87800, right = -91.67845,
-         top = 38.96320)
-
-# Download map
-sq_map <- get_stadiamap(bbox,
-                        maptype = "stamen_terrain")### this is not working
-
-p <- ggmap(sq_map) + 
-  geom_point(data = locs,
-             mapping = aes(x = lon, y = lat),
-             color = "red",
-             size = 3) +
-  labs(x = "Longitude", y = "Latitude")
-p
-
-
-p +
-  annotate(geom = "text",
-           x = -92.45,
-           y = 39.35,
-           label = "Field Sites on the Missouri River",
-           size = 8) +
-  geom_text_repel(data = Locations,
-                  mapping = aes(x = lon, y = lat, label = ID),
-                  box.padding = 1,
-                  seed = 431579)
+# convert to sf object
+sites_sf <- st_as_sf(locs, coords = c("lon", "lat"))
+st_crs(sites_sf) <-"+proj=laea +lon_0=-93.0468754 +lat_0=39.6127177 +datum=WGS84 +units=m +no_defs"
 
 # create map of US
+library(rnaturalearth)
+library(rnaturalearthdata)
+library(rnaturalearthhires)
 
+world <- ne_countries(scale = "medium", returnclass = "sf")
 
 
 # combine as inset
+
+library(cowplot)
+library(patchwork)
+
+main_map <- ggplot(world) +
+  geom_sf() +
+  geom_sf(data = sites_sf, color = "red", size = 2) +
+  coord_sf(xlim = c(-100, -80), ylim = c(30, 50)) +
+  theme_minimal()
+
+# inset map
+usa_states <- ne_states(country = "United States of America", returnclass = "sf")
+
+inset_map <- ggplot(usa_states) +
+  geom_sf(fill = "gray90", color = "white") +
+  geom_sf(data = sites_sf, color = "blue", size = 3) +
+  coord_sf(xlim = c(-92.5, -92.2), ylim = c(38.9, 39.1), expand = FALSE) +
+  theme_void()
+
+# Combine maps
+main_map +
+  inset_element(inset_map, 0.6, 0.6, 1, 1)
+
+
 ```
 
 
