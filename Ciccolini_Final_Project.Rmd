@@ -36,12 +36,25 @@ TP_adult_gridMET_2018_2023_BOI <- read_csv("Data/TP_adult_gridMET_2018_2023_BOI.
 TP_adult_gridMET_2018_2023_BOI <- TP_adult_gridMET_2018_2023_BOI %>%
   filter(!is.na(FireTime) & is.finite(FireTime))
 
+# read in data
+BOI_PF <- read_csv("Data/BOI_PF_adult.csv")
+
+BOI_TP <- read_csv("Data/BOI_TP_adult.csv")
+
+
 # bring in custom theme
 manuscript_theme <- list(
   theme_classic(),
   theme(axis.title = element_text(face = "bold"),
         axis.text = element_text(face = "italic"),
         text = element_text(family = "sans", size = 10)))
+
+poster_theme <- list(
+  theme_classic(),
+  theme(axis.title = element_text(face = "bold"),
+        axis.text = element_text(face = "italic"),
+        text = element_text(family = "sans", size = 24))
+  )
 
 ```
 
@@ -1242,52 +1255,79 @@ ggsave("Figs/study_sites.jpg", plot = study_sites, units = "in",
 
 ## PFCA positivity
 ```{r}
+# combine dfs 
+BOI_TP <- BOI_TP |> 
+  select(YEAR, FrancisellaPresence, RickettsiaPresence)
+
+BOI_TP$SITE <- "Tucker"
+
+BOI_PF <- BOI_PF |> 
+  select(YEAR, FrancisellaPresence, RickettsiaPresence)
+
+BOI_PF$SITE <- "Prairie Fork"
+
+BOI <- rbind(BOI_PF, BOI_TP)
+
 
 # plot for francisella positive cases over years
-PF_Fran_pos <- PF_adult_gridMET_2018_2023_BOI |> 
-  group_by(YEAR) |> 
+Fran_pos <- BOI |> 
+  group_by(YEAR, SITE) |> 
   summarise(positives = sum(FrancisellaPresence),
             total = n())
 
-PF_Fran_pos <- PF_Fran_pos |> 
+Fran_pos <- Fran_pos |> 
   mutate(percent = (positives/total) * 100)
 
 
 
-PF_Fran_pos <- ggplot() +
-  geom_col(data = PF_Fran_pos, aes(x = YEAR, y = total), fill = "grey80") +
-  geom_col(data = PF_Fran_pos, aes(x = YEAR, y = positives), fill = "red") +
-  geom_text(data = PF_Fran_pos,
+Fran_pos_plot <- ggplot() +
+  geom_col(data = Fran_pos, aes(x = YEAR, y = total), fill = "grey80") +
+  geom_col(data = Fran_pos, aes(x = YEAR, y = positives), fill = "red") +
+  geom_text(data = Fran_pos,
             aes(x = YEAR, y = positives, label = paste0(round(percent, 1), "%")),
             vjust = -0.5, fontface = "bold", color = "black") +
-  labs(x = "Year", y = "Ticks Collected") +
-  manuscript_theme
+  facet_wrap(~SITE) +
+  labs(x = "Year", y = "Tick Pools",
+       title = "Francisella Bacteria Positivity") +
+  poster_theme +
+   theme(strip.background = element_blank(),
+        strip.text = element_text(face = "bold", size = rel(1)),
+        axis.title.x = element_blank(),
+        plot.title = element_text(hjust = 0.5))
 
-ggsave("Figs/PF_Fran_pos.jpg", plot = PF_Fran_pos, units = "in",
-       width = 6, height = 4)
+ggsave("Figs/Fran_pos_plot.jpg", plot = Fran_pos_plot, units = "in",
+       width = 9.5, height = 7)
 
-# plot for rickettsia presence over years
-PF_Rick_pos <- PF_adult_gridMET_2018_2023_BOI |> 
-  group_by(YEAR) |> 
+# plot Rickettsia positive cases over years
+Rick_pos <- BOI |> 
+  group_by(YEAR, SITE) |> 
   summarise(positives = sum(RickettsiaPresence),
             total = n())
 
-PF_Rick_pos <- PF_Rick_pos |> 
+Rick_pos <-Rick_pos |> 
   mutate(percent = (positives/total) * 100)
 
 
 
-PF_Rick_pos <- ggplot() +
-  geom_col(data = PF_Rick_pos, aes(x = YEAR, y = total), fill = "grey80") +
-  geom_col(data = PF_Rick_pos, aes(x = YEAR, y = positives), fill = "red") +
-  geom_text(data = PF_Rick_pos,
+Rick_pos_plot <- ggplot() +
+  geom_col(data =Rick_pos, aes(x = YEAR, y = total), fill = "grey80") +
+  geom_col(data =Rick_pos, aes(x = YEAR, y = positives), fill = "red") +
+  geom_text(data =Rick_pos,
             aes(x = YEAR, y = positives, label = paste0(round(percent, 1), "%")),
             vjust = -0.5, fontface = "bold", color = "black") +
-  labs(x = "Year", y = "Ticks Collected") +
-  manuscript_theme ### probably should denote positives somehow
+  facet_wrap(~SITE) +
+  labs(x = "Year", y = "Tick Pools",
+       title = "Rickettsia Bacteria Positivity") +
+  poster_theme +
+   theme(strip.background = element_blank(),
+        strip.text = element_text(face = "bold", size = rel(1)),
+        axis.title.x = element_blank(),
+        plot.title = element_text(hjust = 0.5))
 
-ggsave("Figs/PF_rick_pos.jpg", plot = PF_Rick_pos, units = "in",
-       width = 6, height = 4)
+
+ggsave("Figs/Rick_pos_plot.jpg", plot =Rick_pos_plot, units = "in",
+       width = 9.5, height = 7)
+
 ```
 
 
