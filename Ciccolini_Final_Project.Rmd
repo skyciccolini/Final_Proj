@@ -15,7 +15,8 @@ knitr::opts_chunk$set(echo = TRUE)
 ## Libraries, bring in data, etc
 ```{r}
 library(pacman)
-p_load(tidyverse, AICcmodavg, lme4, plotly, gridExtra, see, cowplot, patchwork)
+p_load(tidyverse, AICcmodavg, lme4, plotly, gridExtra, see, cowplot, patchwork,
+       ggmap, naturalearth, naturalearthhires, ggspatial)
 
 
 
@@ -964,6 +965,7 @@ ggsave("Figs/Rick_pdsi.jpg", plot = Rick_pdsi, units = "in",
 ## Climate figs with both bacteria together
 
 ```{r}
+# For max summer temp----
 # remove stuff 
 P1 <- ggplot() +
   # TP AA
@@ -1048,70 +1050,189 @@ P2 <- ggplot() +
         strip.text = element_blank())
 
 
-# put em together
-p <- list(P1, P2)
-
-wrap_plots(p, nrow = 2) +
-  plot_annotation(tag_levels = "a", tag_suffix = ".")
 
 # Combine plots with shared legend from P1
-combined_plot <- (P1 / P2) + 
+max_sum_comb <- (P1 / P2) + 
   plot_layout(guides = "collect") +
   plot_annotation(tag_levels = "a", tag_suffix = ".") &
   theme(legend.position = "right",
         legend.justification = "center")
 
+# save
+ggsave("Figs/max_sum_comb.jpg", plot = max_sum_comb, units = "in",
+       width = 6, height = 4)
+
+
+# for pdsi ----
+P3 <- ggplot() +
+  # TP AA
+  geom_line(data = TP_Fran_Mean_PDSI_AA_preds,
+            aes(x = Mean_PDSI, y = predicted_prob, linetype = Site),
+            linewidth = 0.75) +
+  geom_ribbon(data = TP_Fran_Mean_PDSI_AA_preds,
+              aes(x = Mean_PDSI, y = predicted_prob,
+                  ymin = ci_lower, ymax = ci_upper, linetype = Site),
+              alpha = 0.2) +
+  # PF AA
+  geom_line(data = PF_Fran_Mean_PDSI_AA_preds,
+            aes(x = Mean_PDSI, y = predicted_prob, linetype = Site),
+            linewidth = 0.75) +
+  geom_ribbon(data = PF_Fran_Mean_PDSI_AA_preds,
+              aes(x = Mean_PDSI, y = predicted_prob,
+                  ymin = ci_lower, ymax = ci_upper, linetype = Site),
+              alpha = 0.2) +
+  # TP DV
+  geom_line(data = TP_Fran_Mean_PDSI_DV_preds,
+            aes(x = Mean_PDSI, y = predicted_prob, linetype = Site),
+            linewidth = 0.75) +
+  geom_ribbon(data = TP_Fran_Mean_PDSI_DV_preds,
+              aes(x = Mean_PDSI, y = predicted_prob,
+                  ymin = ci_lower, ymax = ci_upper, linetype = Site),
+              alpha = 0.2) +
+  geom_line(data = PF_Fran_Mean_PDSI_DV_preds,
+            aes(x = Mean_PDSI, y = predicted_prob, linetype = Site),
+            linewidth = 0.75) +
+  geom_ribbon(data = PF_Fran_Mean_PDSI_DV_preds,
+              aes(x = Mean_PDSI, y = predicted_prob,
+                  ymin = ci_lower, ymax = ci_upper, linetype = Site),
+              alpha = 0.2) +
+  labs(x = "PDSI",
+       y = "Francisella Bacteria \nPredicted Probability") +
+  manuscript_theme +
+  facet_wrap(~SPECIES) +
+  theme(strip.background = element_blank(),
+        strip.text = element_text(face = "bold", size = rel(1.5)),
+        axis.text.x = element_blank(),
+        axis.title.x = element_blank())
+
+P4 <- ggplot() +
+  # TP AA
+  geom_line(data = TP_Rick_Mean_PDSI_AA_preds,
+            aes(x = Mean_PDSI, y = predicted_prob, linetype = Site),
+            linewidth = 0.75) +
+  geom_ribbon(data = TP_Rick_Mean_PDSI_AA_preds,
+              aes(x = Mean_PDSI, y = predicted_prob,
+                  ymin = ci_lower, ymax = ci_upper, linetype = Site),
+              alpha = 0.2) +
+  # PF AA
+  geom_line(data = PF_Rick_Mean_PDSI_AA_preds,
+            aes(x = Mean_PDSI, y = predicted_prob, linetype = Site),
+            linewidth = 0.75) +
+  geom_ribbon(data = PF_Rick_Mean_PDSI_AA_preds,
+              aes(x = Mean_PDSI, y = predicted_prob,
+                  ymin = ci_lower, ymax = ci_upper, linetype = Site),
+              alpha = 0.2) +
+  # TP DV
+  geom_line(data = TP_Rick_Mean_PDSI_DV_preds,
+            aes(x = Mean_PDSI, y = predicted_prob, linetype = Site),
+            linewidth = 0.75) +
+  geom_ribbon(data = TP_Rick_Mean_PDSI_DV_preds,
+              aes(x = Mean_PDSI, y = predicted_prob,
+                  ymin = ci_lower, ymax = ci_upper, linetype = Site),
+              alpha = 0.2) +
+  geom_line(data = PF_Rick_Mean_PDSI_DV_preds,
+            aes(x = Mean_PDSI, y = predicted_prob, linetype = Site),
+            linewidth = 0.75) +
+  geom_ribbon(data = PF_Rick_Mean_PDSI_DV_preds,
+              aes(x = Mean_PDSI, y = predicted_prob,
+                  ymin = ci_lower, ymax = ci_upper, linetype = Site),
+              alpha = 0.2) +
+  labs(x = "PDSI",
+       y = "Rickettsia Bacteria \nPredicted Probability") +
+  manuscript_theme +
+  facet_wrap(~SPECIES) +
+  theme(strip.background = element_blank(),
+        strip.text = element_blank())
+
+
+# Combine plots with shared legend from P1
+pdsi_comb <- (P3 / P4) + 
+  plot_layout(guides = "collect") +
+  plot_annotation(tag_levels = "a", tag_suffix = ".") &
+  theme(legend.position = "right",
+        legend.justification = "center")
+
+# save
+ggsave("Figs/pdsi_comb.jpg", plot = pdsi_comb, units = "in",
+       width = 6, height = 4)
 ```
+
 
 
 ### Oral Presentation Figure
 
 ```{r}
-# map of field sites
 
-library(sf)
+# try again
+
 
 # create map with prairie locs
 locs <- tribble(~ lat, ~ lon, ~ ID,
-                -91.7408, 38.8922, "Prairie Fork",
-                -91.9902, 38.949, "Tucker")
+                38.8922, -91.7408, "Prairie Fork",
+                38.949, -91.9902, "Tucker")
 
-# convert to sf object
-sites_sf <- st_as_sf(locs, coords = c("lon", "lat"))
-st_crs(sites_sf) <-"+proj=laea +lon_0=-93.0468754 +lat_0=39.6127177 +datum=WGS84 +units=m +no_defs"
+# find the center point between the sites
+center_lat <- mean(locs$lat)
+center_lon <- mean(locs$lon)
+span <- 0.2
 
-# create map of US
-library(rnaturalearth)
-library(rnaturalearthdata)
-library(rnaturalearthhires)
+# bounding box
+square_bbox <- c(
+  left   = center_lon - span,
+  bottom = center_lat - span,
+  right  = center_lon + span,
+  top    = center_lat + span
+)
 
+
+# download map
+sq_map <- get_stadiamap(square_bbox,
+                        maptype = "outdoors")
+
+inset_map <- ggmap(sq_map) + 
+  geom_point(data = locs,
+             mapping = aes(x = lon, y = lat),
+             color = "red",
+             size = 3) +
+  geom_text_repel(data = locs,
+                  mapping = aes(x = lon, y = lat, label = ID),
+                  box.padding = 1,
+                  seed = 431579) +
+  theme_void() +
+  theme(
+    plot.background = element_rect(color = "black", linewidth = 0.5, fill = "transparent"),
+    panel.border = element_rect(color = "black", linewidth = 0.5, fill = NA)
+  )
+
+# Country outlines
 world <- ne_countries(scale = "medium", returnclass = "sf")
 
+# US state outlines
+us_states <- ne_states(country = "United States of America", returnclass = "sf")
 
-# combine as inset
+# Your site points (already in sf format)
+# sites in sf
+sites_sf <- st_as_sf(locs, coords = c("lon", "lat"))
 
-library(cowplot)
-library(patchwork)
+# convert to sf in WGS84
+sites_sf <- st_as_sf(locs, coords = c("lon", "lat"), crs = 4326)
 
-main_map <- ggplot(world) +
-  geom_sf() +
-  geom_sf(data = sites_sf, color = "red", size = 2) +
+
+# Plot
+main_map <- ggplot() +
+  geom_sf(data = world, fill = "gray95", color = "black") +  # Country outlines
+  geom_sf(data = us_states, fill = NA, color = "darkgray", linewidth = 0.5) +  # State outlines
+  geom_sf(data = sites_sf, color = "red", size = 1) +  # Your sites
   coord_sf(xlim = c(-100, -80), ylim = c(30, 50)) +
   theme_minimal()
 
-# inset map
-usa_states <- ne_states(country = "United States of America", returnclass = "sf")
+study_sites <- ggdraw() +
+  draw_plot(main_map) +
+  draw_plot(inset_map, x = 0.4, y = 0.38, width = 0.6, height = 0.6)
 
-inset_map <- ggplot(usa_states) +
-  geom_sf(fill = "gray90", color = "white") +
-  geom_sf(data = sites_sf, color = "blue", size = 3) +
-  coord_sf(xlim = c(-92.5, -92.2), ylim = c(38.9, 39.1), expand = FALSE) +
-  theme_void()
-
-# Combine maps
-main_map +
-  inset_element(inset_map, 0.6, 0.6, 1, 1)
-
+# save
+ggsave("Figs/study_sites.jpg", plot = study_sites, units = "in",
+       width = 6, height = 4)
 
 ```
 
