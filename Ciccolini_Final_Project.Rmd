@@ -1,7 +1,7 @@
 ---
 title: "Ciccolini_Final_Proj"
 author: "Skylar Ciccolini"
-date: "2025-09-10"
+date: "2025-10-01"
 output: html_document
 ---
 
@@ -644,7 +644,7 @@ PF_paths_combined_preds <- rbind(
 # Updated ggplot
 recon <- ggplot(PF_paths_combined_preds, aes(x = Restime, y = predicted_prob, linetype = Pathogen)) +
   geom_line(linewidth = 0.75) +
-  geom_ribbon(aes(ymin = ci_lower, ymax = ci_upper), alpha = 0.2) +
+  #geom_ribbon(aes(ymin = ci_lower, ymax = ci_upper), alpha = 0.2) +
   xlab("Reconstruction Year") +
   ylab("Predicted Probability") +
   scale_linetype_manual(
@@ -655,7 +655,7 @@ recon <- ggplot(PF_paths_combined_preds, aes(x = Restime, y = predicted_prob, li
   facet_wrap(~Species) +
   manuscript_theme +
   theme(strip.background = element_blank(),
-        strip.text = element_text(face = "bold", size = rel(1.5)))
+        strip.text = element_text(face = "bold.italic", size = rel(1.5)))
 
   
 
@@ -694,7 +694,7 @@ TP_paths_combined_preds <- rbind(
 # Updated ggplot
 fire <- ggplot(TP_paths_combined_preds, aes(x = FireTime, y = predicted_prob, linetype = Pathogen)) +
   geom_line(linewidth = 0.75) +
-  geom_ribbon(aes(ymin = ci_lower, ymax = ci_upper), alpha = 0.2) +
+  #geom_ribbon(aes(ymin = ci_lower, ymax = ci_upper), alpha = 0.2) +
   xlab("Time Since Fire") +
   ylab("Predicted Probability") +
   scale_linetype_manual(name = "Pathogen", 
@@ -704,7 +704,7 @@ fire <- ggplot(TP_paths_combined_preds, aes(x = FireTime, y = predicted_prob, li
   facet_wrap(~Species) +
   manuscript_theme +
   theme(strip.background = element_blank(),
-        strip.text = element_text(face = "bold", size = rel(1.5)))
+        strip.text = element_text(face = "bold.italic", size = rel(1.5)))
 
 
 ggsave("Figs/Fire.jpg", plot = fire, units = "in",
@@ -738,40 +738,40 @@ Fran_sum <- ggplot() +
   geom_line(data = TP_Fran_max_temp_summer_AA_preds,
             aes(x = max_temp_summer, y = predicted_prob, linetype = Site),
             linewidth = 0.75) +
-  geom_ribbon(data = TP_Fran_max_temp_summer_AA_preds,
-              aes(x = max_temp_summer, y = predicted_prob,
-                  ymin = ci_lower, ymax = ci_upper, linetype = Site),
-              alpha = 0.2) +
+  #geom_ribbon(data = TP_Fran_max_temp_summer_AA_preds,
+              #aes(x = max_temp_summer, y = predicted_prob,
+                  #ymin = ci_lower, ymax = ci_upper, linetype = Site),
+              #alpha = 0.2) +
   # PF AA
   geom_line(data = PF_Fran_max_temp_summer_AA_preds,
             aes(x = max_temp_summer, y = predicted_prob, linetype = Site),
             linewidth = 0.75) +
-  geom_ribbon(data = PF_Fran_max_temp_summer_AA_preds,
-              aes(x = max_temp_summer, y = predicted_prob,
-                  ymin = ci_lower, ymax = ci_upper, linetype = Site),
-              alpha = 0.2) +
+  # geom_ribbon(data = PF_Fran_max_temp_summer_AA_preds,
+  #             aes(x = max_temp_summer, y = predicted_prob,
+  #                 ymin = ci_lower, ymax = ci_upper, linetype = Site),
+  #             alpha = 0.2) +
   # TP DV
   geom_line(data = TP_Fran_max_temp_summer_DV_preds,
             aes(x = max_temp_summer, y = predicted_prob, linetype = Site),
             linewidth = 0.75) +
-  geom_ribbon(data = TP_Fran_max_temp_summer_DV_preds,
-              aes(x = max_temp_summer, y = predicted_prob,
-                  ymin = ci_lower, ymax = ci_upper, linetype = Site),
-              alpha = 0.2) +
+  # geom_ribbon(data = TP_Fran_max_temp_summer_DV_preds,
+  #             aes(x = max_temp_summer, y = predicted_prob,
+  #                 ymin = ci_lower, ymax = ci_upper, linetype = Site),
+  #             alpha = 0.2) +
   # PF DV
   geom_line(data = PF_Fran_max_temp_summer_DV_preds,
             aes(x = max_temp_summer, y = predicted_prob, linetype = Site),
             linewidth = 0.75) +
-  geom_ribbon(data = PF_Fran_max_temp_summer_DV_preds,
-              aes(x = max_temp_summer, y = predicted_prob,
-                  ymin = ci_lower, ymax = ci_upper, linetype = Site),
-              alpha = 0.2) +
+  # geom_ribbon(data = PF_Fran_max_temp_summer_DV_preds,
+  #             aes(x = max_temp_summer, y = predicted_prob,
+  #                 ymin = ci_lower, ymax = ci_upper, linetype = Site),
+  #             alpha = 0.2) +
   labs(x = expression("Nymphal Questing Max Summer Temperature (" * ~degree * C * ")"),
        y = "Francisella Bacteria \nPredicted Probability") +
   manuscript_theme +
   facet_wrap(~SPECIES) +
   theme(strip.background = element_blank(),
-        strip.text = element_text(face = "bold", size = rel(1.5)))
+        strip.text = element_text(face = "bold.italic", size = rel(1.5)))
 
 
 ggsave("Figs/Fran_sum.jpg", plot = Fran_sum, units = "in",
@@ -801,39 +801,39 @@ Fran_pdsi <- ggplot() +
   geom_line(data = TP_Fran_Mean_PDSI_AA_preds,
             aes(x = Mean_PDSI, y = predicted_prob, linetype = Site),
             linewidth = 0.75) +
-  geom_ribbon(data = TP_Fran_Mean_PDSI_AA_preds,
-              aes(x = Mean_PDSI, y = predicted_prob,
-                  ymin = ci_lower, ymax = ci_upper, linetype = Site),
-              alpha = 0.2) +
+  # geom_ribbon(data = TP_Fran_Mean_PDSI_AA_preds,
+  #             aes(x = Mean_PDSI, y = predicted_prob,
+  #                 ymin = ci_lower, ymax = ci_upper, linetype = Site),
+  #             alpha = 0.2) +
   # PF AA
   geom_line(data = PF_Fran_Mean_PDSI_AA_preds,
             aes(x = Mean_PDSI, y = predicted_prob, linetype = Site),
             linewidth = 0.75) +
-  geom_ribbon(data = PF_Fran_Mean_PDSI_AA_preds,
-              aes(x = Mean_PDSI, y = predicted_prob,
-                  ymin = ci_lower, ymax = ci_upper, linetype = Site),
-              alpha = 0.2) +
+  # geom_ribbon(data = PF_Fran_Mean_PDSI_AA_preds,
+  #             aes(x = Mean_PDSI, y = predicted_prob,
+  #                 ymin = ci_lower, ymax = ci_upper, linetype = Site),
+  #             alpha = 0.2) +
   # TP DV
   geom_line(data = TP_Fran_Mean_PDSI_DV_preds,
             aes(x = Mean_PDSI, y = predicted_prob, linetype = Site),
             linewidth = 0.75) +
-  geom_ribbon(data = TP_Fran_Mean_PDSI_DV_preds,
-              aes(x = Mean_PDSI, y = predicted_prob,
-                  ymin = ci_lower, ymax = ci_upper, linetype = Site),
-              alpha = 0.2) +
+  # geom_ribbon(data = TP_Fran_Mean_PDSI_DV_preds,
+  #             aes(x = Mean_PDSI, y = predicted_prob,
+  #                 ymin = ci_lower, ymax = ci_upper, linetype = Site),
+  #             alpha = 0.2) +
   geom_line(data = PF_Fran_Mean_PDSI_DV_preds,
             aes(x = Mean_PDSI, y = predicted_prob, linetype = Site),
             linewidth = 0.75) +
-  geom_ribbon(data = PF_Fran_Mean_PDSI_DV_preds,
-              aes(x = Mean_PDSI, y = predicted_prob,
-                  ymin = ci_lower, ymax = ci_upper, linetype = Site),
-              alpha = 0.2) +
+  # geom_ribbon(data = PF_Fran_Mean_PDSI_DV_preds,
+  #             aes(x = Mean_PDSI, y = predicted_prob,
+  #                 ymin = ci_lower, ymax = ci_upper, linetype = Site),
+  #             alpha = 0.2) +
   labs(x = "PDSI",
        y = "Francisella Bacteria \nPredicted Probability") +
   manuscript_theme +
   facet_wrap(~SPECIES) +
   theme(strip.background = element_blank(),
-        strip.text = element_text(face = "bold", size = rel(1.5)))
+        strip.text = element_text(face = "bold.italic", size = rel(1.5)))
 
 
 ggsave("Figs/Fran_pdsi.jpg", plot = Fran_pdsi, units = "in",
@@ -871,40 +871,40 @@ Rick_sum <- ggplot() +
   geom_line(data = TP_Rick_max_temp_summer_AA_preds,
             aes(x = max_temp_summer, y = predicted_prob, linetype = Site),
             linewidth = 0.75) +
-  geom_ribbon(data = TP_Rick_max_temp_summer_AA_preds,
-              aes(x = max_temp_summer, y = predicted_prob,
-                  ymin = ci_lower, ymax = ci_upper, linetype = Site),
-              alpha = 0.2) +
+  # geom_ribbon(data = TP_Rick_max_temp_summer_AA_preds,
+  #             aes(x = max_temp_summer, y = predicted_prob,
+  #                 ymin = ci_lower, ymax = ci_upper, linetype = Site),
+  #             alpha = 0.2) +
   # PF AA
   geom_line(data = PF_Rick_max_temp_summer_AA_preds,
             aes(x = max_temp_summer, y = predicted_prob, linetype = Site),
             linewidth = 0.75) +
-  geom_ribbon(data = PF_Rick_max_temp_summer_AA_preds,
-              aes(x = max_temp_summer, y = predicted_prob,
-                  ymin = ci_lower, ymax = ci_upper, linetype = Site),
-              alpha = 0.2) +
+  # geom_ribbon(data = PF_Rick_max_temp_summer_AA_preds,
+  #             aes(x = max_temp_summer, y = predicted_prob,
+  #                 ymin = ci_lower, ymax = ci_upper, linetype = Site),
+  #             alpha = 0.2) +
   # TP DV
   geom_line(data = TP_Rick_max_temp_summer_DV_preds,
             aes(x = max_temp_summer, y = predicted_prob, linetype = Site),
             linewidth = 0.75) +
-  geom_ribbon(data = TP_Rick_max_temp_summer_DV_preds,
-              aes(x = max_temp_summer, y = predicted_prob,
-                  ymin = ci_lower, ymax = ci_upper, linetype = Site),
-              alpha = 0.2) +
+  # geom_ribbon(data = TP_Rick_max_temp_summer_DV_preds,
+  #             aes(x = max_temp_summer, y = predicted_prob,
+  #                 ymin = ci_lower, ymax = ci_upper, linetype = Site),
+  #             alpha = 0.2) +
   # PF DV
   geom_line(data = PF_Rick_max_temp_summer_DV_preds,
             aes(x = max_temp_summer, y = predicted_prob, linetype = Site),
             linewidth = 0.75) +
-  geom_ribbon(data = PF_Rick_max_temp_summer_DV_preds,
-              aes(x = max_temp_summer, y = predicted_prob,
-                  ymin = ci_lower, ymax = ci_upper, linetype = Site),
-              alpha = 0.2) +
+  # geom_ribbon(data = PF_Rick_max_temp_summer_DV_preds,
+  #             aes(x = max_temp_summer, y = predicted_prob,
+  #                 ymin = ci_lower, ymax = ci_upper, linetype = Site),
+  #             alpha = 0.2) +
   labs(x = expression("Nymphal Questing Max Summer Temperature (" * ~degree * C * ")"),
        y = "Rickettsia Bacteria \nPredicted Probability") +
   manuscript_theme +
   facet_wrap(~SPECIES) +
   theme(strip.background = element_blank(),
-        strip.text = element_text(face = "bold", size = rel(1.5)))
+        strip.text = element_text(face = "bold.italic", size = rel(1.5)))
 
   
 
@@ -935,39 +935,39 @@ Rick_pdsi <- ggplot() +
   geom_line(data = TP_Rick_Mean_PDSI_AA_preds,
             aes(x = Mean_PDSI, y = predicted_prob, linetype = Site),
             linewidth = 0.75) +
-  geom_ribbon(data = TP_Rick_Mean_PDSI_AA_preds,
-              aes(x = Mean_PDSI, y = predicted_prob,
-                  ymin = ci_lower, ymax = ci_upper, linetype = Site),
-              alpha = 0.2) +
+  # geom_ribbon(data = TP_Rick_Mean_PDSI_AA_preds,
+  #             aes(x = Mean_PDSI, y = predicted_prob,
+  #                 ymin = ci_lower, ymax = ci_upper, linetype = Site),
+  #             alpha = 0.2) +
   # PF AA
   geom_line(data = PF_Rick_Mean_PDSI_AA_preds,
             aes(x = Mean_PDSI, y = predicted_prob, linetype = Site),
             linewidth = 0.75) +
-  geom_ribbon(data = PF_Rick_Mean_PDSI_AA_preds,
-              aes(x = Mean_PDSI, y = predicted_prob,
-                  ymin = ci_lower, ymax = ci_upper, linetype = Site),
-              alpha = 0.2) +
+  # geom_ribbon(data = PF_Rick_Mean_PDSI_AA_preds,
+  #             aes(x = Mean_PDSI, y = predicted_prob,
+  #                 ymin = ci_lower, ymax = ci_upper, linetype = Site),
+  #             alpha = 0.2) +
   # TP DV
   geom_line(data = TP_Rick_Mean_PDSI_DV_preds,
             aes(x = Mean_PDSI, y = predicted_prob, linetype = Site),
             linewidth = 0.75) +
-  geom_ribbon(data = TP_Rick_Mean_PDSI_DV_preds,
-              aes(x = Mean_PDSI, y = predicted_prob,
-                  ymin = ci_lower, ymax = ci_upper, linetype = Site),
-              alpha = 0.2) +
+  # geom_ribbon(data = TP_Rick_Mean_PDSI_DV_preds,
+  #             aes(x = Mean_PDSI, y = predicted_prob,
+  #                 ymin = ci_lower, ymax = ci_upper, linetype = Site),
+  #             alpha = 0.2) +
   geom_line(data = PF_Rick_Mean_PDSI_DV_preds,
             aes(x = Mean_PDSI, y = predicted_prob, linetype = Site),
             linewidth = 0.75) +
-  geom_ribbon(data = PF_Rick_Mean_PDSI_DV_preds,
-              aes(x = Mean_PDSI, y = predicted_prob,
-                  ymin = ci_lower, ymax = ci_upper, linetype = Site),
-              alpha = 0.2) +
+  # geom_ribbon(data = PF_Rick_Mean_PDSI_DV_preds,
+  #             aes(x = Mean_PDSI, y = predicted_prob,
+  #                 ymin = ci_lower, ymax = ci_upper, linetype = Site),
+  #             alpha = 0.2) +
   labs(x = "PDSI",
        y = "Rickettsia Bacteria \nPredicted Probability") +
   manuscript_theme +
   facet_wrap(~SPECIES) +
   theme(strip.background = element_blank(),
-        strip.text = element_text(face = "bold", size = rel(1.5)))
+        strip.text = element_text(face = "bold.italic", size = rel(1.5)))
 
 
 ggsave("Figs/Rick_pdsi.jpg", plot = Rick_pdsi, units = "in",
@@ -985,40 +985,40 @@ P1 <- ggplot() +
   geom_line(data = TP_Fran_max_temp_summer_AA_preds,
             aes(x = max_temp_summer, y = predicted_prob, linetype = Site),
             linewidth = 0.75) +
-  geom_ribbon(data = TP_Fran_max_temp_summer_AA_preds,
-              aes(x = max_temp_summer, y = predicted_prob,
-                  ymin = ci_lower, ymax = ci_upper, linetype = Site),
-              alpha = 0.2) +
+  # geom_ribbon(data = TP_Fran_max_temp_summer_AA_preds,
+  #             aes(x = max_temp_summer, y = predicted_prob,
+  #                 ymin = ci_lower, ymax = ci_upper, linetype = Site),
+  #             alpha = 0.2) +
   # PF AA
   geom_line(data = PF_Fran_max_temp_summer_AA_preds,
             aes(x = max_temp_summer, y = predicted_prob, linetype = Site),
             linewidth = 0.75) +
-  geom_ribbon(data = PF_Fran_max_temp_summer_AA_preds,
-              aes(x = max_temp_summer, y = predicted_prob,
-                  ymin = ci_lower, ymax = ci_upper, linetype = Site),
-              alpha = 0.2) +
+  # geom_ribbon(data = PF_Fran_max_temp_summer_AA_preds,
+  #             aes(x = max_temp_summer, y = predicted_prob,
+  #                 ymin = ci_lower, ymax = ci_upper, linetype = Site),
+  #             alpha = 0.2) +
   # TP DV
   geom_line(data = TP_Fran_max_temp_summer_DV_preds,
             aes(x = max_temp_summer, y = predicted_prob, linetype = Site),
             linewidth = 0.75) +
-  geom_ribbon(data = TP_Fran_max_temp_summer_DV_preds,
-              aes(x = max_temp_summer, y = predicted_prob,
-                  ymin = ci_lower, ymax = ci_upper, linetype = Site),
-              alpha = 0.2) +
+  # geom_ribbon(data = TP_Fran_max_temp_summer_DV_preds,
+  #             aes(x = max_temp_summer, y = predicted_prob,
+  #                 ymin = ci_lower, ymax = ci_upper, linetype = Site),
+  #             alpha = 0.2) +
   # PF DV
   geom_line(data = PF_Fran_max_temp_summer_DV_preds,
             aes(x = max_temp_summer, y = predicted_prob, linetype = Site),
             linewidth = 0.75) +
-  geom_ribbon(data = PF_Fran_max_temp_summer_DV_preds,
-              aes(x = max_temp_summer, y = predicted_prob,
-                  ymin = ci_lower, ymax = ci_upper, linetype = Site),
-              alpha = 0.2) +
+  # geom_ribbon(data = PF_Fran_max_temp_summer_DV_preds,
+  #             aes(x = max_temp_summer, y = predicted_prob,
+  #                 ymin = ci_lower, ymax = ci_upper, linetype = Site),
+  #             alpha = 0.2) +
   labs(x = expression("Nymphal Questing Max Summer Temperature (" * ~degree * C * ")"),
        y = "Francisella Bacteria \nPredicted Probability") +
   manuscript_theme +
   facet_wrap(~SPECIES) +
   theme(strip.background = element_blank(),
-        strip.text = element_text(face = "bold", size = rel(1.5)),
+        strip.text = element_text(face = "bold.italic", size = rel(1.5)),
         axis.title.x = element_blank(),
         axis.text.x = element_blank())
 
@@ -1027,34 +1027,34 @@ P2 <- ggplot() +
   geom_line(data = TP_Rick_max_temp_summer_AA_preds,
             aes(x = max_temp_summer, y = predicted_prob, linetype = Site),
             linewidth = 0.75) +
-  geom_ribbon(data = TP_Rick_max_temp_summer_AA_preds,
-              aes(x = max_temp_summer, y = predicted_prob,
-                  ymin = ci_lower, ymax = ci_upper, linetype = Site),
-              alpha = 0.2) +
+  # geom_ribbon(data = TP_Rick_max_temp_summer_AA_preds,
+  #             aes(x = max_temp_summer, y = predicted_prob,
+  #                 ymin = ci_lower, ymax = ci_upper, linetype = Site),
+  #             alpha = 0.2) +
   # PF AA
   geom_line(data = PF_Rick_max_temp_summer_AA_preds,
             aes(x = max_temp_summer, y = predicted_prob, linetype = Site),
             linewidth = 0.75) +
-  geom_ribbon(data = PF_Rick_max_temp_summer_AA_preds,
-              aes(x = max_temp_summer, y = predicted_prob,
-                  ymin = ci_lower, ymax = ci_upper, linetype = Site),
-              alpha = 0.2) +
+  # geom_ribbon(data = PF_Rick_max_temp_summer_AA_preds,
+  #             aes(x = max_temp_summer, y = predicted_prob,
+  #                 ymin = ci_lower, ymax = ci_upper, linetype = Site),
+  #             alpha = 0.2) +
   # TP DV
   geom_line(data = TP_Rick_max_temp_summer_DV_preds,
             aes(x = max_temp_summer, y = predicted_prob, linetype = Site),
             linewidth = 0.75) +
-  geom_ribbon(data = TP_Rick_max_temp_summer_DV_preds,
-              aes(x = max_temp_summer, y = predicted_prob,
-                  ymin = ci_lower, ymax = ci_upper, linetype = Site),
-              alpha = 0.2) +
+  # geom_ribbon(data = TP_Rick_max_temp_summer_DV_preds,
+  #             aes(x = max_temp_summer, y = predicted_prob,
+  #                 ymin = ci_lower, ymax = ci_upper, linetype = Site),
+  #             alpha = 0.2) +
   # PF DV
   geom_line(data = PF_Rick_max_temp_summer_DV_preds,
             aes(x = max_temp_summer, y = predicted_prob, linetype = Site),
             linewidth = 0.75) +
-  geom_ribbon(data = PF_Rick_max_temp_summer_DV_preds,
-              aes(x = max_temp_summer, y = predicted_prob,
-                  ymin = ci_lower, ymax = ci_upper, linetype = Site),
-              alpha = 0.2) +
+  # geom_ribbon(data = PF_Rick_max_temp_summer_DV_preds,
+  #             aes(x = max_temp_summer, y = predicted_prob,
+  #                 ymin = ci_lower, ymax = ci_upper, linetype = Site),
+  #             alpha = 0.2) +
   labs(x = expression("Nymphal Questing Max Summer Temperature (" * ~degree * C * ")"),
        y = "Rickettsia Bacteria \nPredicted Probability") +
   manuscript_theme +
@@ -1082,39 +1082,39 @@ P3 <- ggplot() +
   geom_line(data = TP_Fran_Mean_PDSI_AA_preds,
             aes(x = Mean_PDSI, y = predicted_prob, linetype = Site),
             linewidth = 0.75) +
-  geom_ribbon(data = TP_Fran_Mean_PDSI_AA_preds,
-              aes(x = Mean_PDSI, y = predicted_prob,
-                  ymin = ci_lower, ymax = ci_upper, linetype = Site),
-              alpha = 0.2) +
+  # geom_ribbon(data = TP_Fran_Mean_PDSI_AA_preds,
+  #             aes(x = Mean_PDSI, y = predicted_prob,
+  #                 ymin = ci_lower, ymax = ci_upper, linetype = Site),
+  #             alpha = 0.2) +
   # PF AA
   geom_line(data = PF_Fran_Mean_PDSI_AA_preds,
             aes(x = Mean_PDSI, y = predicted_prob, linetype = Site),
             linewidth = 0.75) +
-  geom_ribbon(data = PF_Fran_Mean_PDSI_AA_preds,
-              aes(x = Mean_PDSI, y = predicted_prob,
-                  ymin = ci_lower, ymax = ci_upper, linetype = Site),
-              alpha = 0.2) +
+  # geom_ribbon(data = PF_Fran_Mean_PDSI_AA_preds,
+  #             aes(x = Mean_PDSI, y = predicted_prob,
+  #                 ymin = ci_lower, ymax = ci_upper, linetype = Site),
+  #             alpha = 0.2) +
   # TP DV
   geom_line(data = TP_Fran_Mean_PDSI_DV_preds,
             aes(x = Mean_PDSI, y = predicted_prob, linetype = Site),
             linewidth = 0.75) +
-  geom_ribbon(data = TP_Fran_Mean_PDSI_DV_preds,
-              aes(x = Mean_PDSI, y = predicted_prob,
-                  ymin = ci_lower, ymax = ci_upper, linetype = Site),
-              alpha = 0.2) +
+  # geom_ribbon(data = TP_Fran_Mean_PDSI_DV_preds,
+  #             aes(x = Mean_PDSI, y = predicted_prob,
+  #                 ymin = ci_lower, ymax = ci_upper, linetype = Site),
+  #             alpha = 0.2) +
   geom_line(data = PF_Fran_Mean_PDSI_DV_preds,
             aes(x = Mean_PDSI, y = predicted_prob, linetype = Site),
             linewidth = 0.75) +
-  geom_ribbon(data = PF_Fran_Mean_PDSI_DV_preds,
-              aes(x = Mean_PDSI, y = predicted_prob,
-                  ymin = ci_lower, ymax = ci_upper, linetype = Site),
-              alpha = 0.2) +
+  # geom_ribbon(data = PF_Fran_Mean_PDSI_DV_preds,
+  #             aes(x = Mean_PDSI, y = predicted_prob,
+  #                 ymin = ci_lower, ymax = ci_upper, linetype = Site),
+  #             alpha = 0.2) +
   labs(x = "PDSI",
        y = "Francisella Bacteria \nPredicted Probability") +
   manuscript_theme +
   facet_wrap(~SPECIES) +
   theme(strip.background = element_blank(),
-        strip.text = element_text(face = "bold", size = rel(1.5)),
+        strip.text = element_text(face = "bold.italic", size = rel(1.5)),
         axis.text.x = element_blank(),
         axis.title.x = element_blank())
 
@@ -1123,33 +1123,33 @@ P4 <- ggplot() +
   geom_line(data = TP_Rick_Mean_PDSI_AA_preds,
             aes(x = Mean_PDSI, y = predicted_prob, linetype = Site),
             linewidth = 0.75) +
-  geom_ribbon(data = TP_Rick_Mean_PDSI_AA_preds,
-              aes(x = Mean_PDSI, y = predicted_prob,
-                  ymin = ci_lower, ymax = ci_upper, linetype = Site),
-              alpha = 0.2) +
+  # geom_ribbon(data = TP_Rick_Mean_PDSI_AA_preds,
+  #             aes(x = Mean_PDSI, y = predicted_prob,
+  #                 ymin = ci_lower, ymax = ci_upper, linetype = Site),
+  #             alpha = 0.2) +
   # PF AA
   geom_line(data = PF_Rick_Mean_PDSI_AA_preds,
             aes(x = Mean_PDSI, y = predicted_prob, linetype = Site),
             linewidth = 0.75) +
-  geom_ribbon(data = PF_Rick_Mean_PDSI_AA_preds,
-              aes(x = Mean_PDSI, y = predicted_prob,
-                  ymin = ci_lower, ymax = ci_upper, linetype = Site),
-              alpha = 0.2) +
+  # geom_ribbon(data = PF_Rick_Mean_PDSI_AA_preds,
+  #             aes(x = Mean_PDSI, y = predicted_prob,
+  #                 ymin = ci_lower, ymax = ci_upper, linetype = Site),
+  #             alpha = 0.2) +
   # TP DV
   geom_line(data = TP_Rick_Mean_PDSI_DV_preds,
             aes(x = Mean_PDSI, y = predicted_prob, linetype = Site),
             linewidth = 0.75) +
-  geom_ribbon(data = TP_Rick_Mean_PDSI_DV_preds,
-              aes(x = Mean_PDSI, y = predicted_prob,
-                  ymin = ci_lower, ymax = ci_upper, linetype = Site),
-              alpha = 0.2) +
+  # geom_ribbon(data = TP_Rick_Mean_PDSI_DV_preds,
+  #             aes(x = Mean_PDSI, y = predicted_prob,
+  #                 ymin = ci_lower, ymax = ci_upper, linetype = Site),
+  #             alpha = 0.2) +
   geom_line(data = PF_Rick_Mean_PDSI_DV_preds,
             aes(x = Mean_PDSI, y = predicted_prob, linetype = Site),
             linewidth = 0.75) +
-  geom_ribbon(data = PF_Rick_Mean_PDSI_DV_preds,
-              aes(x = Mean_PDSI, y = predicted_prob,
-                  ymin = ci_lower, ymax = ci_upper, linetype = Site),
-              alpha = 0.2) +
+  # geom_ribbon(data = PF_Rick_Mean_PDSI_DV_preds,
+  #             aes(x = Mean_PDSI, y = predicted_prob,
+  #                 ymin = ci_lower, ymax = ci_upper, linetype = Site),
+  #             alpha = 0.2) +
   labs(x = "PDSI",
        y = "Rickettsia Bacteria \nPredicted Probability") +
   manuscript_theme +
