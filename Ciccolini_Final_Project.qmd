@@ -1,0 +1,1344 @@
+---
+title: "Ciccolini_Final_Project"
+format: html
+editor: visual
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+### Set Up
+
+## Libraries, bring in data, etc
+```{r}
+library(pacman)
+p_load(tidyverse, AICcmodavg, lme4, plotly, gridExtra, see, cowplot, patchwork,
+       ggmap, naturalearth, naturalearthhires, ggspatial)
+
+
+
+# read in data
+
+PF_adult_gridMET_2018_2023_BOI <- read_csv("Data/PF_adult_gridMET_2018_2023_BOI.csv")
+
+# remove NAs
+PF_adult_gridMET_2018_2023_BOI <- PF_adult_gridMET_2018_2023_BOI |> 
+  filter(!is.na(Restime) & is.finite(Restime))
+
+# read in data
+
+TP_adult_gridMET_2018_2023_BOI <- read_csv("Data/TP_adult_gridMET_2018_2023_BOI.csv")
+
+# remove NAs
+TP_adult_gridMET_2018_2023_BOI <- TP_adult_gridMET_2018_2023_BOI %>%
+  filter(!is.na(FireTime) & is.finite(FireTime))
+
+# read in data
+BOI_PF <- read_csv("Data/BOI_PF_adult.csv")
+
+BOI_TP <- read_csv("Data/BOI_TP_adult.csv")
+
+
+# bring in custom theme
+manuscript_theme <- list(
+  theme_classic(),
+  theme(axis.title = element_text(face = "bold"),
+        axis.text = element_text(face = "italic"),
+        text = element_text(family = "sans", size = 10)))
+
+poster_theme <- list(
+  theme_classic(),
+  theme(axis.title = element_text(face = "bold"),
+        axis.text = element_text(face = "italic"),
+        text = element_text(family = "sans", size = 24))
+  )
+
+```
+
+## Models and predictions for Francisella 
+
+```{r}
+
+PF_Fran_Res_climate_int_spp_glm <- glm(data = PF_adult_gridMET_2018_2023_BOI, family = binomial,
+                                       FrancisellaPresence ~ Restime*max_temp_summer + Restime*Mean_PDSI + 
+                                         max_temp_summer:Mean_PDSI + SPECIES)
+
+
+TP_Fran_Res_climate_int_spp_glm <- glm(data = TP_adult_gridMET_2018_2023_BOI, family = binomial,
+                                       FrancisellaPresence ~ FireTime*max_temp_summer + FireTime*Mean_PDSI + 
+                                         max_temp_summer:Mean_PDSI + SPECIES)
+
+####### PFCA
+
+
+# For A americanum----
+
+# split data by spp
+
+PF_AA <- PF_adult_gridMET_2018_2023_BOI |> 
+  filter(SPECIES == "AA")
+
+# predicted values
+PF_Fran_Restime_AA_preds <- data.frame(
+  Restime = seq(min(PF_AA$Restime), max(PF_AA$Restime), length.out = 100),
+  max_temp_summer = mean(PF_AA$max_temp_summer),
+  Mean_PDSI = mean(PF_AA$Mean_PDSI),
+  SPECIES = rep("AA", 100)
+)
+
+PF_Fran_Restime_AA_preds$predicted_prob <- predict(PF_Fran_Res_climate_int_spp_glm, 
+                                                newdata = PF_Fran_Restime_AA_preds, type = "response") 
+
+#add std error
+PF_Fran_Restime_AA_preds$std_error <- with(PF_Fran_Restime_AA_preds, sd(predicted_prob) / sqrt(length(predicted_prob)))
+PF_Fran_Restime_AA_preds$ci_lower <- PF_Fran_Restime_AA_preds$predicted_prob - 1.96 * PF_Fran_Restime_AA_preds$std_error
+PF_Fran_Restime_AA_preds$ci_upper <- PF_Fran_Restime_AA_preds$predicted_prob + 1.96 * PF_Fran_Restime_AA_preds$std_error
+
+
+
+# Create a new data frame for predictions
+PF_Fran_max_temp_summer_AA_preds <- data.frame(
+  Restime = mean(PF_AA$Restime),
+  max_temp_summer = seq(min(PF_AA$max_temp_summer), max(PF_AA$max_temp_summer), 
+                        length.out = 100),
+  Mean_PDSI = mean(PF_AA$Mean_PDSI),
+  SPECIES = rep("AA", 100)
+)
+
+# Add predicted probabilities
+PF_Fran_max_temp_summer_AA_preds$predicted_prob <- predict(PF_Fran_Res_climate_int_spp_glm, 
+                                                        newdata = PF_Fran_max_temp_summer_AA_preds, type = "response")
+
+#add std error
+
+PF_Fran_max_temp_summer_AA_preds$std_error <- with(PF_Fran_max_temp_summer_AA_preds, sd(predicted_prob) / sqrt(length(predicted_prob)))
+PF_Fran_max_temp_summer_AA_preds$ci_lower <- PF_Fran_max_temp_summer_AA_preds$predicted_prob - 1.96 * PF_Fran_max_temp_summer_AA_preds$std_error
+PF_Fran_max_temp_summer_AA_preds$ci_upper <- PF_Fran_max_temp_summer_AA_preds$predicted_prob + 1.96 * PF_Fran_max_temp_summer_AA_preds$std_error
+
+
+# Create a new data frame for predictions
+PF_Fran_Mean_PDSI_AA_preds <- data.frame(
+  Restime = mean(PF_AA$Restime),
+  max_temp_summer = mean(PF_AA$max_temp_summer),
+  Mean_PDSI = seq(min(PF_AA$Mean_PDSI), max(PF_AA$Mean_PDSI), length.out = 100),
+  SPECIES = rep("AA", 100)
+)
+
+# Add predicted probabilities
+PF_Fran_Mean_PDSI_AA_preds$predicted_prob <- predict(PF_Fran_Res_climate_int_spp_glm, 
+                                                  newdata = PF_Fran_Mean_PDSI_AA_preds, type = "response")
+#add std error
+
+PF_Fran_Mean_PDSI_AA_preds$std_error <- with(PF_Fran_Mean_PDSI_AA_preds, sd(predicted_prob) / sqrt(length(predicted_prob)))
+PF_Fran_Mean_PDSI_AA_preds$ci_lower <- PF_Fran_Mean_PDSI_AA_preds$predicted_prob - 1.96 * PF_Fran_Mean_PDSI_AA_preds$std_error
+PF_Fran_Mean_PDSI_AA_preds$ci_upper <- PF_Fran_Mean_PDSI_AA_preds$predicted_prob + 1.96 * PF_Fran_Mean_PDSI_AA_preds$std_error
+
+# For D variabilis----
+
+# split data by spp
+
+PF_DV <- PF_adult_gridMET_2018_2023_BOI |> 
+  filter(SPECIES == "DV")
+
+# predicted values
+PF_Fran_Restime_DV_preds <- data.frame(
+  Restime = seq(min(PF_DV$Restime), max(PF_DV$Restime), length.out = 100),
+  max_temp_summer = mean(PF_DV$max_temp_summer),
+  Mean_PDSI = mean(PF_DV$Mean_PDSI),
+  SPECIES = rep("DV", 100)
+)
+
+PF_Fran_Restime_DV_preds$predicted_prob <- predict(PF_Fran_Res_climate_int_spp_glm, 
+                                                   newdata = PF_Fran_Restime_DV_preds, type = "response") 
+
+#add std error
+PF_Fran_Restime_DV_preds$std_error <- with(PF_Fran_Restime_DV_preds, sd(predicted_prob) / sqrt(length(predicted_prob)))
+PF_Fran_Restime_DV_preds$ci_lower <- PF_Fran_Restime_DV_preds$predicted_prob - 1.96 * PF_Fran_Restime_DV_preds$std_error
+PF_Fran_Restime_DV_preds$ci_upper <- PF_Fran_Restime_DV_preds$predicted_prob + 1.96 * PF_Fran_Restime_DV_preds$std_error
+
+
+
+# Create a new data frame for predictions
+PF_Fran_max_temp_summer_DV_preds <- data.frame(
+  Restime = mean(PF_DV$Restime),
+  max_temp_summer = seq(min(PF_DV$max_temp_summer), max(PF_DV$max_temp_summer), 
+                        length.out = 100),
+  Mean_PDSI = mean(PF_DV$Mean_PDSI),
+  SPECIES = rep("DV", 100)
+)
+
+# Add predicted probabilities
+PF_Fran_max_temp_summer_DV_preds$predicted_prob <- predict(PF_Fran_Res_climate_int_spp_glm, 
+                                                           newdata = PF_Fran_max_temp_summer_DV_preds, type = "response")
+
+#add std error
+
+PF_Fran_max_temp_summer_DV_preds$std_error <- with(PF_Fran_max_temp_summer_DV_preds, sd(predicted_prob) / sqrt(length(predicted_prob)))
+PF_Fran_max_temp_summer_DV_preds$ci_lower <- PF_Fran_max_temp_summer_DV_preds$predicted_prob - 1.96 * PF_Fran_max_temp_summer_DV_preds$std_error
+PF_Fran_max_temp_summer_DV_preds$ci_upper <- PF_Fran_max_temp_summer_DV_preds$predicted_prob + 1.96 * PF_Fran_max_temp_summer_DV_preds$std_error
+
+
+# Create a new data frame for predictions
+PF_Fran_Mean_PDSI_DV_preds <- data.frame(
+  Restime = mean(PF_DV$Restime),
+  max_temp_summer = mean(PF_DV$max_temp_summer),
+  Mean_PDSI = seq(min(PF_DV$Mean_PDSI), max(PF_DV$Mean_PDSI), length.out = 100),
+  SPECIES = rep("DV", 100)
+)
+
+# Add predicted probabilities
+PF_Fran_Mean_PDSI_DV_preds$predicted_prob <- predict(PF_Fran_Res_climate_int_spp_glm, 
+                                                     newdata = PF_Fran_Mean_PDSI_DV_preds, type = "response")
+#add std error
+
+PF_Fran_Mean_PDSI_DV_preds$std_error <- with(PF_Fran_Mean_PDSI_DV_preds, sd(predicted_prob) / sqrt(length(predicted_prob)))
+PF_Fran_Mean_PDSI_DV_preds$ci_lower <- PF_Fran_Mean_PDSI_DV_preds$predicted_prob - 1.96 * PF_Fran_Mean_PDSI_DV_preds$std_error
+PF_Fran_Mean_PDSI_DV_preds$ci_upper <- PF_Fran_Mean_PDSI_DV_preds$predicted_prob + 1.96 * PF_Fran_Mean_PDSI_DV_preds$std_error
+
+
+
+
+####### Tucker
+
+# For A americanum----
+
+# split data by spp
+
+TP_AA <- TP_adult_gridMET_2018_2023_BOI |> 
+  filter(SPECIES == "AA")
+
+# predicted values
+TP_Fran_FireTime_AA_preds <- data.frame(
+  FireTime = seq(min(TP_AA$FireTime), max(TP_AA$FireTime), length.out = 100),
+  max_temp_summer = mean(TP_AA$max_temp_summer),
+  Mean_PDSI = mean(TP_AA$Mean_PDSI),
+  SPECIES = rep("AA", 100)
+)
+
+TP_Fran_FireTime_AA_preds$predicted_prob <- predict(TP_Fran_Res_climate_int_spp_glm, 
+                                                   newdata = TP_Fran_FireTime_AA_preds, type = "response") 
+
+#add std error
+TP_Fran_FireTime_AA_preds$std_error <- with(TP_Fran_FireTime_AA_preds, sd(predicted_prob) / sqrt(length(predicted_prob)))
+TP_Fran_FireTime_AA_preds$ci_lower <- TP_Fran_FireTime_AA_preds$predicted_prob - 1.96 * TP_Fran_FireTime_AA_preds$std_error
+TP_Fran_FireTime_AA_preds$ci_upper <- TP_Fran_FireTime_AA_preds$predicted_prob + 1.96 * TP_Fran_FireTime_AA_preds$std_error
+
+
+
+# Create a new data frame for predictions
+TP_Fran_max_temp_summer_AA_preds <- data.frame(
+  FireTime = mean(TP_AA$FireTime),
+  max_temp_summer = seq(min(TP_AA$max_temp_summer), max(TP_AA$max_temp_summer), 
+                        length.out = 100),
+  Mean_PDSI = mean(TP_AA$Mean_PDSI),
+  SPECIES = rep("AA", 100)
+)
+
+# Add predicted probabilities
+TP_Fran_max_temp_summer_AA_preds$predicted_prob <- predict(TP_Fran_Res_climate_int_spp_glm, 
+                                                           newdata = TP_Fran_max_temp_summer_AA_preds, type = "response")
+
+#add std error
+
+TP_Fran_max_temp_summer_AA_preds$std_error <- with(TP_Fran_max_temp_summer_AA_preds, sd(predicted_prob) / sqrt(length(predicted_prob)))
+TP_Fran_max_temp_summer_AA_preds$ci_lower <- TP_Fran_max_temp_summer_AA_preds$predicted_prob - 1.96 * TP_Fran_max_temp_summer_AA_preds$std_error
+TP_Fran_max_temp_summer_AA_preds$ci_upper <- TP_Fran_max_temp_summer_AA_preds$predicted_prob + 1.96 * TP_Fran_max_temp_summer_AA_preds$std_error
+
+
+# Create a new data frame for predictions
+TP_Fran_Mean_PDSI_AA_preds <- data.frame(
+  FireTime = mean(TP_AA$FireTime),
+  max_temp_summer = mean(TP_AA$max_temp_summer),
+  Mean_PDSI = seq(min(TP_AA$Mean_PDSI), max(TP_AA$Mean_PDSI), length.out = 100),
+  SPECIES = rep("AA", 100)
+)
+
+# Add predicted probabilities
+TP_Fran_Mean_PDSI_AA_preds$predicted_prob <- predict(TP_Fran_Res_climate_int_spp_glm, 
+                                                     newdata = TP_Fran_Mean_PDSI_AA_preds, type = "response")
+#add std error
+
+TP_Fran_Mean_PDSI_AA_preds$std_error <- with(TP_Fran_Mean_PDSI_AA_preds, sd(predicted_prob) / sqrt(length(predicted_prob)))
+TP_Fran_Mean_PDSI_AA_preds$ci_lower <- TP_Fran_Mean_PDSI_AA_preds$predicted_prob - 1.96 * TP_Fran_Mean_PDSI_AA_preds$std_error
+TP_Fran_Mean_PDSI_AA_preds$ci_upper <- TP_Fran_Mean_PDSI_AA_preds$predicted_prob + 1.96 * TP_Fran_Mean_PDSI_AA_preds$std_error
+
+# For D variabilis----
+
+# split data by spp
+
+TP_DV <- TP_adult_gridMET_2018_2023_BOI |> 
+  filter(SPECIES == "DV")
+
+# predicted values
+TP_Fran_FireTime_DV_preds <- data.frame(
+  FireTime = seq(min(TP_DV$FireTime), max(TP_DV$FireTime), length.out = 100),
+  max_temp_summer = mean(TP_DV$max_temp_summer),
+  Mean_PDSI = mean(TP_DV$Mean_PDSI),
+  SPECIES = rep("DV", 100)
+)
+
+TP_Fran_FireTime_DV_preds$predicted_prob <- predict(TP_Fran_Res_climate_int_spp_glm, 
+                                                   newdata = TP_Fran_FireTime_DV_preds, type = "response") 
+
+#add std error
+TP_Fran_FireTime_DV_preds$std_error <- with(TP_Fran_FireTime_DV_preds, sd(predicted_prob) / sqrt(length(predicted_prob)))
+TP_Fran_FireTime_DV_preds$ci_lower <- TP_Fran_FireTime_DV_preds$predicted_prob - 1.96 * TP_Fran_FireTime_DV_preds$std_error
+TP_Fran_FireTime_DV_preds$ci_upper <- TP_Fran_FireTime_DV_preds$predicted_prob + 1.96 * TP_Fran_FireTime_DV_preds$std_error
+
+
+
+# Create a new data frame for predictions
+TP_Fran_max_temp_summer_DV_preds <- data.frame(
+  FireTime = mean(TP_DV$FireTime),
+  max_temp_summer = seq(min(TP_DV$max_temp_summer), max(TP_DV$max_temp_summer), 
+                        length.out = 100),
+  Mean_PDSI = mean(TP_DV$Mean_PDSI),
+  SPECIES = rep("DV", 100)
+)
+
+# Add predicted probabilities
+TP_Fran_max_temp_summer_DV_preds$predicted_prob <- predict(TP_Fran_Res_climate_int_spp_glm, 
+                                                           newdata = TP_Fran_max_temp_summer_DV_preds, type = "response")
+
+#add std error
+
+TP_Fran_max_temp_summer_DV_preds$std_error <- with(TP_Fran_max_temp_summer_DV_preds, sd(predicted_prob) / sqrt(length(predicted_prob)))
+TP_Fran_max_temp_summer_DV_preds$ci_lower <- TP_Fran_max_temp_summer_DV_preds$predicted_prob - 1.96 * TP_Fran_max_temp_summer_DV_preds$std_error
+TP_Fran_max_temp_summer_DV_preds$ci_upper <- TP_Fran_max_temp_summer_DV_preds$predicted_prob + 1.96 * TP_Fran_max_temp_summer_DV_preds$std_error
+
+
+# Create a new data frame for predictions
+TP_Fran_Mean_PDSI_DV_preds <- data.frame(
+  FireTime = mean(TP_DV$FireTime),
+  max_temp_summer = mean(TP_DV$max_temp_summer),
+  Mean_PDSI = seq(min(TP_DV$Mean_PDSI), max(TP_DV$Mean_PDSI), length.out = 100),
+  SPECIES = rep("DV", 100)
+)
+
+# Add predicted probabilities
+TP_Fran_Mean_PDSI_DV_preds$predicted_prob <- predict(TP_Fran_Res_climate_int_spp_glm, 
+                                                     newdata = TP_Fran_Mean_PDSI_DV_preds, type = "response")
+#add std error
+
+TP_Fran_Mean_PDSI_DV_preds$std_error <- with(TP_Fran_Mean_PDSI_DV_preds, sd(predicted_prob) / sqrt(length(predicted_prob)))
+TP_Fran_Mean_PDSI_DV_preds$ci_lower <- TP_Fran_Mean_PDSI_DV_preds$predicted_prob - 1.96 * TP_Fran_Mean_PDSI_DV_preds$std_error
+TP_Fran_Mean_PDSI_DV_preds$ci_upper <- TP_Fran_Mean_PDSI_DV_preds$predicted_prob + 1.96 * TP_Fran_Mean_PDSI_DV_preds$std_error
+
+
+
+
+
+
+```
+
+
+## Models and predictions for Rickettsia
+
+```{r}
+
+PF_Rick_Res_climate_int_spp_glm <- glm(data = PF_adult_gridMET_2018_2023_BOI, family = binomial,
+                                      RickettsiaPresence ~ Restime*max_temp_summer + Restime*Mean_PDSI + 
+                                        max_temp_summer:Mean_PDSI + SPECIES)
+
+TP_Rick_Res_climate_int_spp_glm <- glm(data = TP_adult_gridMET_2018_2023_BOI, family = binomial,
+                                       RickettsiaPresence ~ FireTime*max_temp_summer + FireTime*Mean_PDSI + 
+                                         max_temp_summer:Mean_PDSI + SPECIES)
+
+###### PFCA
+
+# For A americanum ----
+
+# split data by spp
+
+PF_AA <- PF_adult_gridMET_2018_2023_BOI |> 
+  filter(SPECIES == "AA")
+
+# predicted values
+PF_Rick_Restime_AA_preds <- data.frame(
+  Restime = seq(min(PF_AA$Restime), max(PF_AA$Restime), length.out = 100),
+  max_temp_summer = mean(PF_AA$max_temp_summer),
+  Mean_PDSI = mean(PF_AA$Mean_PDSI),
+  SPECIES = rep("AA", 100)
+)
+
+PF_Rick_Restime_AA_preds$predicted_prob <- predict(PF_Rick_Res_climate_int_spp_glm, 
+                                                   newdata = PF_Rick_Restime_AA_preds, type = "response") 
+
+#add std error
+PF_Rick_Restime_AA_preds$std_error <- with(PF_Rick_Restime_AA_preds, sd(predicted_prob) / sqrt(length(predicted_prob)))
+PF_Rick_Restime_AA_preds$ci_lower <- PF_Rick_Restime_AA_preds$predicted_prob - 1.96 * PF_Rick_Restime_AA_preds$std_error
+PF_Rick_Restime_AA_preds$ci_upper <- PF_Rick_Restime_AA_preds$predicted_prob + 1.96 * PF_Rick_Restime_AA_preds$std_error
+
+
+
+# Create a new data frame for predictions
+PF_Rick_max_temp_summer_AA_preds <- data.frame(
+  Restime = mean(PF_AA$Restime),
+  max_temp_summer = seq(min(PF_AA$max_temp_summer), max(PF_AA$max_temp_summer), 
+                        length.out = 100),
+  Mean_PDSI = mean(PF_AA$Mean_PDSI),
+  SPECIES = rep("AA", 100)
+)
+
+# Add predicted probabilities
+PF_Rick_max_temp_summer_AA_preds$predicted_prob <- predict(PF_Rick_Res_climate_int_spp_glm, 
+                                                           newdata = PF_Rick_max_temp_summer_AA_preds, type = "response")
+
+#add std error
+
+PF_Rick_max_temp_summer_AA_preds$std_error <- with(PF_Rick_max_temp_summer_AA_preds, sd(predicted_prob) / sqrt(length(predicted_prob)))
+PF_Rick_max_temp_summer_AA_preds$ci_lower <- PF_Rick_max_temp_summer_AA_preds$predicted_prob - 1.96 * PF_Rick_max_temp_summer_AA_preds$std_error
+PF_Rick_max_temp_summer_AA_preds$ci_upper <- PF_Rick_max_temp_summer_AA_preds$predicted_prob + 1.96 * PF_Rick_max_temp_summer_AA_preds$std_error
+
+
+# Create a new data frame for predictions
+PF_Rick_Mean_PDSI_AA_preds <- data.frame(
+  Restime = mean(PF_AA$Restime),
+  max_temp_summer = mean(PF_AA$max_temp_summer),
+  Mean_PDSI = seq(min(PF_AA$Mean_PDSI), max(PF_AA$Mean_PDSI), length.out = 100),
+  SPECIES = rep("AA", 100)
+)
+
+# Add predicted probabilities
+PF_Rick_Mean_PDSI_AA_preds$predicted_prob <- predict(PF_Rick_Res_climate_int_spp_glm, 
+                                                     newdata = PF_Rick_Mean_PDSI_AA_preds, type = "response")
+#add std error
+
+PF_Rick_Mean_PDSI_AA_preds$std_error <- with(PF_Rick_Mean_PDSI_AA_preds, sd(predicted_prob) / sqrt(length(predicted_prob)))
+PF_Rick_Mean_PDSI_AA_preds$ci_lower <- PF_Rick_Mean_PDSI_AA_preds$predicted_prob - 1.96 * PF_Rick_Mean_PDSI_AA_preds$std_error
+PF_Rick_Mean_PDSI_AA_preds$ci_upper <- PF_Rick_Mean_PDSI_AA_preds$predicted_prob + 1.96 * PF_Rick_Mean_PDSI_AA_preds$std_error
+
+
+
+
+
+
+# For D variabilis----
+# split data by spp
+
+PF_DV <- PF_adult_gridMET_2018_2023_BOI |> 
+  filter(SPECIES == "DV")
+
+# predicted values
+PF_Rick_Restime_DV_preds <- data.frame(
+  Restime = seq(min(PF_DV$Restime), max(PF_DV$Restime), length.out = 100),
+  max_temp_summer = mean(PF_DV$max_temp_summer),
+  Mean_PDSI = mean(PF_DV$Mean_PDSI),
+  SPECIES = rep("DV", 100)
+)
+
+PF_Rick_Restime_DV_preds$predicted_prob <- predict(PF_Rick_Res_climate_int_spp_glm, 
+                                                   newdata = PF_Rick_Restime_DV_preds, type = "response") 
+
+#add std error
+PF_Rick_Restime_DV_preds$std_error <- with(PF_Rick_Restime_DV_preds, sd(predicted_prob) / sqrt(length(predicted_prob)))
+PF_Rick_Restime_DV_preds$ci_lower <- PF_Rick_Restime_DV_preds$predicted_prob - 1.96 * PF_Rick_Restime_DV_preds$std_error
+PF_Rick_Restime_DV_preds$ci_upper <- PF_Rick_Restime_DV_preds$predicted_prob + 1.96 * PF_Rick_Restime_DV_preds$std_error
+
+
+
+# Create a new data frame for predictions
+PF_Rick_max_temp_summer_DV_preds <- data.frame(
+  Restime = mean(PF_DV$Restime),
+  max_temp_summer = seq(min(PF_DV$max_temp_summer), max(PF_DV$max_temp_summer), 
+                        length.out = 100),
+  Mean_PDSI = mean(PF_DV$Mean_PDSI),
+  SPECIES = rep("DV", 100)
+)
+
+# Add predicted probabilities
+PF_Rick_max_temp_summer_DV_preds$predicted_prob <- predict(PF_Rick_Res_climate_int_spp_glm, 
+                                                           newdata = PF_Rick_max_temp_summer_DV_preds, type = "response")
+
+#add std error
+
+PF_Rick_max_temp_summer_DV_preds$std_error <- with(PF_Rick_max_temp_summer_DV_preds, sd(predicted_prob) / sqrt(length(predicted_prob)))
+PF_Rick_max_temp_summer_DV_preds$ci_lower <- PF_Rick_max_temp_summer_DV_preds$predicted_prob - 1.96 * PF_Rick_max_temp_summer_DV_preds$std_error
+PF_Rick_max_temp_summer_DV_preds$ci_upper <- PF_Rick_max_temp_summer_DV_preds$predicted_prob + 1.96 * PF_Rick_max_temp_summer_DV_preds$std_error
+
+
+# Create a new data frame for predictions
+PF_Rick_Mean_PDSI_DV_preds <- data.frame(
+  Restime = mean(PF_DV$Restime),
+  max_temp_summer = mean(PF_DV$max_temp_summer),
+  Mean_PDSI = seq(min(PF_DV$Mean_PDSI), max(PF_DV$Mean_PDSI), length.out = 100),
+  SPECIES = rep("DV", 100)
+)
+
+# Add predicted probabilities
+PF_Rick_Mean_PDSI_DV_preds$predicted_prob <- predict(PF_Rick_Res_climate_int_spp_glm, 
+                                                     newdata = PF_Rick_Mean_PDSI_DV_preds, type = "response")
+#add std error
+
+PF_Rick_Mean_PDSI_DV_preds$std_error <- with(PF_Rick_Mean_PDSI_DV_preds, sd(predicted_prob) / sqrt(length(predicted_prob)))
+PF_Rick_Mean_PDSI_DV_preds$ci_lower <- PF_Rick_Mean_PDSI_DV_preds$predicted_prob - 1.96 * PF_Rick_Mean_PDSI_DV_preds$std_error
+PF_Rick_Mean_PDSI_DV_preds$ci_upper <- PF_Rick_Mean_PDSI_DV_preds$predicted_prob + 1.96 * PF_Rick_Mean_PDSI_DV_preds$std_error
+
+
+###### Tucker
+
+# For A americanum----
+
+# split data by spp
+
+TP_AA <- TP_adult_gridMET_2018_2023_BOI |> 
+  filter(SPECIES == "AA")
+
+# predicted values
+TP_Rick_FireTime_AA_preds <- data.frame(
+  FireTime = seq(min(TP_AA$FireTime), max(TP_AA$FireTime), length.out = 100),
+  max_temp_summer = mean(TP_AA$max_temp_summer),
+  Mean_PDSI = mean(TP_AA$Mean_PDSI),
+  SPECIES = rep("AA", 100)
+)
+
+TP_Rick_FireTime_AA_preds$predicted_prob <- predict(TP_Rick_Res_climate_int_spp_glm, 
+                                                    newdata = TP_Rick_FireTime_AA_preds, type = "response") 
+
+#add std error
+TP_Rick_FireTime_AA_preds$std_error <- with(TP_Rick_FireTime_AA_preds, sd(predicted_prob) / sqrt(length(predicted_prob)))
+TP_Rick_FireTime_AA_preds$ci_lower <- TP_Rick_FireTime_AA_preds$predicted_prob - 1.96 * TP_Rick_FireTime_AA_preds$std_error
+TP_Rick_FireTime_AA_preds$ci_upper <- TP_Rick_FireTime_AA_preds$predicted_prob + 1.96 * TP_Rick_FireTime_AA_preds$std_error
+
+
+
+# Create a new data frame for predictions
+TP_Rick_max_temp_summer_AA_preds <- data.frame(
+  FireTime = mean(TP_AA$FireTime),
+  max_temp_summer = seq(min(TP_AA$max_temp_summer), max(TP_AA$max_temp_summer), 
+                        length.out = 100),
+  Mean_PDSI = mean(TP_AA$Mean_PDSI),
+  SPECIES = rep("AA", 100)
+)
+
+# Add predicted probabilities
+TP_Rick_max_temp_summer_AA_preds$predicted_prob <- predict(TP_Rick_Res_climate_int_spp_glm, 
+                                                           newdata = TP_Rick_max_temp_summer_AA_preds, type = "response")
+
+#add std error
+
+TP_Rick_max_temp_summer_AA_preds$std_error <- with(TP_Rick_max_temp_summer_AA_preds, sd(predicted_prob) / sqrt(length(predicted_prob)))
+TP_Rick_max_temp_summer_AA_preds$ci_lower <- TP_Rick_max_temp_summer_AA_preds$predicted_prob - 1.96 * TP_Rick_max_temp_summer_AA_preds$std_error
+TP_Rick_max_temp_summer_AA_preds$ci_upper <- TP_Rick_max_temp_summer_AA_preds$predicted_prob + 1.96 * TP_Rick_max_temp_summer_AA_preds$std_error
+
+
+# Create a new data frame for predictions
+TP_Rick_Mean_PDSI_AA_preds <- data.frame(
+  FireTime = mean(TP_AA$FireTime),
+  max_temp_summer = mean(TP_AA$max_temp_summer),
+  Mean_PDSI = seq(min(TP_AA$Mean_PDSI), max(TP_AA$Mean_PDSI), length.out = 100),
+  SPECIES = rep("AA", 100)
+)
+
+# Add predicted probabilities
+TP_Rick_Mean_PDSI_AA_preds$predicted_prob <- predict(TP_Rick_Res_climate_int_spp_glm, 
+                                                     newdata = TP_Rick_Mean_PDSI_AA_preds, type = "response")
+#add std error
+
+TP_Rick_Mean_PDSI_AA_preds$std_error <- with(TP_Rick_Mean_PDSI_AA_preds, sd(predicted_prob) / sqrt(length(predicted_prob)))
+TP_Rick_Mean_PDSI_AA_preds$ci_lower <- TP_Rick_Mean_PDSI_AA_preds$predicted_prob - 1.96 * TP_Rick_Mean_PDSI_AA_preds$std_error
+TP_Rick_Mean_PDSI_AA_preds$ci_upper <- TP_Rick_Mean_PDSI_AA_preds$predicted_prob + 1.96 * TP_Rick_Mean_PDSI_AA_preds$std_error
+
+
+# For D variabilis----
+
+# split data by spp
+
+TP_DV <- TP_adult_gridMET_2018_2023_BOI |> 
+  filter(SPECIES == "DV")
+
+# predicted values
+TP_Rick_FireTime_DV_preds <- data.frame(
+  FireTime = seq(min(TP_DV$FireTime), max(TP_DV$FireTime), length.out = 100),
+  max_temp_summer = mean(TP_DV$max_temp_summer),
+  Mean_PDSI = mean(TP_DV$Mean_PDSI),
+  SPECIES = rep("DV", 100)
+)
+
+TP_Rick_FireTime_DV_preds$predicted_prob <- predict(TP_Rick_Res_climate_int_spp_glm, 
+                                                    newdata = TP_Rick_FireTime_DV_preds, type = "response") 
+
+#add std error
+TP_Rick_FireTime_DV_preds$std_error <- with(TP_Rick_FireTime_DV_preds, sd(predicted_prob) / sqrt(length(predicted_prob)))
+TP_Rick_FireTime_DV_preds$ci_lower <- TP_Rick_FireTime_DV_preds$predicted_prob - 1.96 * TP_Rick_FireTime_DV_preds$std_error
+TP_Rick_FireTime_DV_preds$ci_upper <- TP_Rick_FireTime_DV_preds$predicted_prob + 1.96 * TP_Rick_FireTime_DV_preds$std_error
+
+
+
+# Create a new data frame for predictions
+TP_Rick_max_temp_summer_DV_preds <- data.frame(
+  FireTime = mean(TP_DV$FireTime),
+  max_temp_summer = seq(min(TP_DV$max_temp_summer), max(TP_DV$max_temp_summer), 
+                        length.out = 100),
+  Mean_PDSI = mean(TP_DV$Mean_PDSI),
+  SPECIES = rep("DV", 100)
+)
+
+# Add predicted probabilities
+TP_Rick_max_temp_summer_DV_preds$predicted_prob <- predict(TP_Rick_Res_climate_int_spp_glm, 
+                                                           newdata = TP_Rick_max_temp_summer_DV_preds, type = "response")
+
+#add std error
+
+TP_Rick_max_temp_summer_DV_preds$std_error <- with(TP_Rick_max_temp_summer_DV_preds, sd(predicted_prob) / sqrt(length(predicted_prob)))
+TP_Rick_max_temp_summer_DV_preds$ci_lower <- TP_Rick_max_temp_summer_DV_preds$predicted_prob - 1.96 * TP_Rick_max_temp_summer_DV_preds$std_error
+TP_Rick_max_temp_summer_DV_preds$ci_upper <- TP_Rick_max_temp_summer_DV_preds$predicted_prob + 1.96 * TP_Rick_max_temp_summer_DV_preds$std_error
+
+
+# Create a new data frame for predictions
+TP_Rick_Mean_PDSI_DV_preds <- data.frame(
+  FireTime = mean(TP_DV$FireTime),
+  max_temp_summer = mean(TP_DV$max_temp_summer),
+  Mean_PDSI = seq(min(TP_DV$Mean_PDSI), max(TP_DV$Mean_PDSI), length.out = 100),
+  SPECIES = rep("DV", 100)
+)
+
+# Add predicted probabilities
+TP_Rick_Mean_PDSI_DV_preds$predicted_prob <- predict(TP_Rick_Res_climate_int_spp_glm, 
+                                                     newdata = TP_Rick_Mean_PDSI_DV_preds, type = "response")
+#add std error
+
+TP_Rick_Mean_PDSI_DV_preds$std_error <- with(TP_Rick_Mean_PDSI_DV_preds, sd(predicted_prob) / sqrt(length(predicted_prob)))
+TP_Rick_Mean_PDSI_DV_preds$ci_lower <- TP_Rick_Mean_PDSI_DV_preds$predicted_prob - 1.96 * TP_Rick_Mean_PDSI_DV_preds$std_error
+TP_Rick_Mean_PDSI_DV_preds$ci_upper <- TP_Rick_Mean_PDSI_DV_preds$predicted_prob + 1.96 * TP_Rick_Mean_PDSI_DV_preds$std_error
+
+
+
+
+
+```
+
+
+### Manuscript Figures
+
+## Management figs with both bacterias
+```{r}
+# plot for reconstruction age with both bacterias faceted by SPP ----
+
+# Add a new column to each dataset
+PF_Fran_Restime_AA_preds$Pathogen <- "Francisella"
+PF_Fran_Restime_AA_preds$Species <- "A. americanum"
+
+PF_Rick_Restime_AA_preds$Pathogen <- "Rickettsia"
+PF_Rick_Restime_AA_preds$Species <- "A. americanum"
+
+PF_Fran_Restime_DV_preds$Pathogen <- "Francisella"
+PF_Fran_Restime_DV_preds$Species <- "D. variabilis"
+
+PF_Rick_Restime_DV_preds$Pathogen <- "Rickettsia"
+PF_Rick_Restime_DV_preds$Species <- "D. variabilis"
+
+
+# Combine the datasets
+PF_paths_combined_preds <- rbind(
+  PF_Fran_Restime_AA_preds,
+  PF_Rick_Restime_AA_preds,
+  PF_Fran_Restime_DV_preds,
+  PF_Rick_Restime_DV_preds
+)
+
+
+# Updated ggplot
+recon <- ggplot(PF_paths_combined_preds, aes(x = Restime, y = predicted_prob, linetype = Pathogen)) +
+  geom_line(linewidth = 0.75) +
+  #geom_ribbon(aes(ymin = ci_lower, ymax = ci_upper), alpha = 0.2) +
+  xlab("Reconstruction Year") +
+  ylab("Predicted Probability") +
+  scale_linetype_manual(
+    name = "Pathogen",
+    labels = c(expression(italic("Francisella")), expression(italic("Rickettsia"))),
+    values = c("Francisella" = "dashed", "Rickettsia" = "solid")
+  ) +
+  facet_wrap(~Species) +
+  manuscript_theme +
+  theme(strip.background = element_blank(),
+        strip.text = element_text(face = "bold.italic", size = rel(1.5)))
+
+  
+
+ggsave("Figs/Recon.jpg", plot = recon, units = "in",
+       width = 6, height = 4)
+
+### cant really add raw data because such different y scales of predicted plots and raw data?
+
+
+# plot for fire with both bacterias
+
+# Add a new column to each dataset
+TP_Fran_FireTime_AA_preds$Pathogen <- "Francisella"
+TP_Rick_FireTime_AA_preds$Pathogen <- "Rickettsia"
+
+TP_Fran_FireTime_AA_preds$Pathogen <- "Francisella"
+TP_Fran_FireTime_AA_preds$Species <- "A. americanum"
+
+TP_Rick_FireTime_AA_preds$Pathogen <- "Rickettsia"
+TP_Rick_FireTime_AA_preds$Species <- "A. americanum"
+
+TP_Fran_FireTime_DV_preds$Pathogen <- "Francisella"
+TP_Fran_FireTime_DV_preds$Species <- "D. variabilis"
+
+TP_Rick_FireTime_DV_preds$Pathogen <- "Rickettsia"
+TP_Rick_FireTime_DV_preds$Species <- "D. variabilis"
+
+# Combine the datasets
+TP_paths_combined_preds <- rbind(
+  TP_Fran_FireTime_AA_preds,
+  TP_Rick_FireTime_AA_preds,
+  TP_Fran_FireTime_DV_preds,
+  TP_Rick_FireTime_DV_preds
+)
+
+# Updated ggplot
+fire <- ggplot(TP_paths_combined_preds, aes(x = FireTime, y = predicted_prob, linetype = Pathogen)) +
+  geom_line(linewidth = 0.75) +
+  #geom_ribbon(aes(ymin = ci_lower, ymax = ci_upper), alpha = 0.2) +
+  xlab("Time Since Fire") +
+  ylab("Predicted Probability") +
+  scale_linetype_manual(name = "Pathogen", 
+                        labels = c(expression(italic("Francisella")),
+                                   expression(italic("Rickettsia"))),
+                        values = c("Francisella" = "dashed", "Rickettsia" = "solid")) +
+  facet_wrap(~Species) +
+  manuscript_theme +
+  theme(strip.background = element_blank(),
+        strip.text = element_text(face = "bold.italic", size = rel(1.5)))
+
+
+ggsave("Figs/Fire.jpg", plot = fire, units = "in",
+       width = 6, height = 4)
+
+
+```
+
+
+## Cliamte figs with both sites with Francisella
+```{r}
+# plot for max summer temp with both sites----
+
+library(ggplot2)
+
+# Add a new column to each dataset
+TP_Fran_max_temp_summer_AA_preds$Site <- "Remnant"
+PF_Fran_max_temp_summer_AA_preds$Site <- "Reconstructed"
+
+TP_Fran_max_temp_summer_DV_preds$Site <- "Remnant"
+PF_Fran_max_temp_summer_DV_preds$Site <- "Reconstructed"
+
+TP_Fran_max_temp_summer_AA_preds$SPECIES <- "A. americanum"
+PF_Fran_max_temp_summer_AA_preds$SPECIES <- "A. americanum"
+
+TP_Fran_max_temp_summer_DV_preds$SPECIES <- "D. variabilis"
+PF_Fran_max_temp_summer_DV_preds$SPECIES <- "D. variabilis"
+
+Fran_sum <- ggplot() +
+  # TP AA
+  geom_line(data = TP_Fran_max_temp_summer_AA_preds,
+            aes(x = max_temp_summer, y = predicted_prob, linetype = Site),
+            linewidth = 0.75) +
+  #geom_ribbon(data = TP_Fran_max_temp_summer_AA_preds,
+              #aes(x = max_temp_summer, y = predicted_prob,
+                  #ymin = ci_lower, ymax = ci_upper, linetype = Site),
+              #alpha = 0.2) +
+  # PF AA
+  geom_line(data = PF_Fran_max_temp_summer_AA_preds,
+            aes(x = max_temp_summer, y = predicted_prob, linetype = Site),
+            linewidth = 0.75) +
+  # geom_ribbon(data = PF_Fran_max_temp_summer_AA_preds,
+  #             aes(x = max_temp_summer, y = predicted_prob,
+  #                 ymin = ci_lower, ymax = ci_upper, linetype = Site),
+  #             alpha = 0.2) +
+  # TP DV
+  geom_line(data = TP_Fran_max_temp_summer_DV_preds,
+            aes(x = max_temp_summer, y = predicted_prob, linetype = Site),
+            linewidth = 0.75) +
+  # geom_ribbon(data = TP_Fran_max_temp_summer_DV_preds,
+  #             aes(x = max_temp_summer, y = predicted_prob,
+  #                 ymin = ci_lower, ymax = ci_upper, linetype = Site),
+  #             alpha = 0.2) +
+  # PF DV
+  geom_line(data = PF_Fran_max_temp_summer_DV_preds,
+            aes(x = max_temp_summer, y = predicted_prob, linetype = Site),
+            linewidth = 0.75) +
+  # geom_ribbon(data = PF_Fran_max_temp_summer_DV_preds,
+  #             aes(x = max_temp_summer, y = predicted_prob,
+  #                 ymin = ci_lower, ymax = ci_upper, linetype = Site),
+  #             alpha = 0.2) +
+  labs(x = expression("Nymphal Questing Max Summer Temperature (" * ~degree * C * ")"),
+       y = "Francisella Bacteria \nPredicted Probability") +
+  manuscript_theme +
+  facet_wrap(~SPECIES) +
+  theme(strip.background = element_blank(),
+        strip.text = element_text(face = "bold.italic", size = rel(1.5)))
+
+
+ggsave("Figs/Fran_sum.jpg", plot = Fran_sum, units = "in",
+       width = 6, height = 4)
+
+
+
+
+# plot for pdsi at both study sites ----
+
+# Add a new column to each dataset
+TP_Fran_Mean_PDSI_AA_preds$Site <- "Remnant"
+PF_Fran_Mean_PDSI_AA_preds$Site <- "Reconstructed"
+
+TP_Fran_Mean_PDSI_DV_preds$Site <- "Remnant"
+PF_Fran_Mean_PDSI_DV_preds$Site <- "Reconstructed"
+
+TP_Fran_Mean_PDSI_AA_preds$SPECIES <- "A. americanum"
+PF_Fran_Mean_PDSI_AA_preds$SPECIES <- "A. americanum"
+
+TP_Fran_Mean_PDSI_DV_preds$SPECIES <- "D. variabilis"
+PF_Fran_Mean_PDSI_DV_preds$SPECIES <- "D. variabilis"
+
+
+Fran_pdsi <- ggplot() +
+  # TP AA
+  geom_line(data = TP_Fran_Mean_PDSI_AA_preds,
+            aes(x = Mean_PDSI, y = predicted_prob, linetype = Site),
+            linewidth = 0.75) +
+  # geom_ribbon(data = TP_Fran_Mean_PDSI_AA_preds,
+  #             aes(x = Mean_PDSI, y = predicted_prob,
+  #                 ymin = ci_lower, ymax = ci_upper, linetype = Site),
+  #             alpha = 0.2) +
+  # PF AA
+  geom_line(data = PF_Fran_Mean_PDSI_AA_preds,
+            aes(x = Mean_PDSI, y = predicted_prob, linetype = Site),
+            linewidth = 0.75) +
+  # geom_ribbon(data = PF_Fran_Mean_PDSI_AA_preds,
+  #             aes(x = Mean_PDSI, y = predicted_prob,
+  #                 ymin = ci_lower, ymax = ci_upper, linetype = Site),
+  #             alpha = 0.2) +
+  # TP DV
+  geom_line(data = TP_Fran_Mean_PDSI_DV_preds,
+            aes(x = Mean_PDSI, y = predicted_prob, linetype = Site),
+            linewidth = 0.75) +
+  # geom_ribbon(data = TP_Fran_Mean_PDSI_DV_preds,
+  #             aes(x = Mean_PDSI, y = predicted_prob,
+  #                 ymin = ci_lower, ymax = ci_upper, linetype = Site),
+  #             alpha = 0.2) +
+  geom_line(data = PF_Fran_Mean_PDSI_DV_preds,
+            aes(x = Mean_PDSI, y = predicted_prob, linetype = Site),
+            linewidth = 0.75) +
+  # geom_ribbon(data = PF_Fran_Mean_PDSI_DV_preds,
+  #             aes(x = Mean_PDSI, y = predicted_prob,
+  #                 ymin = ci_lower, ymax = ci_upper, linetype = Site),
+  #             alpha = 0.2) +
+  labs(x = "PDSI",
+       y = "Francisella Bacteria \nPredicted Probability") +
+  manuscript_theme +
+  facet_wrap(~SPECIES) +
+  theme(strip.background = element_blank(),
+        strip.text = element_text(face = "bold.italic", size = rel(1.5)))
+
+
+ggsave("Figs/Fran_pdsi.jpg", plot = Fran_pdsi, units = "in",
+       width = 6, height = 4)
+
+
+
+
+
+
+```
+
+## Climate figs with both sites with Rickettsia
+
+```{r}
+# plot for max summer temp with both sites----
+
+
+# Add a new column to each dataset
+TP_Rick_max_temp_summer_AA_preds$Site <- "Remnant"
+PF_Rick_max_temp_summer_AA_preds$Site <- "Reconstructed"
+
+TP_Rick_max_temp_summer_DV_preds$Site <- "Remnant"
+PF_Rick_max_temp_summer_DV_preds$Site <- "Reconstructed"
+
+TP_Rick_max_temp_summer_AA_preds$SPECIES <- "A. americanum"
+PF_Rick_max_temp_summer_AA_preds$SPECIES <- "A. americanum"
+
+TP_Rick_max_temp_summer_DV_preds$SPECIES <- "D. variabilis"
+PF_Rick_max_temp_summer_DV_preds$SPECIES <- "D. variabilis"
+
+
+Rick_sum <- ggplot() +
+  # TP AA
+  geom_line(data = TP_Rick_max_temp_summer_AA_preds,
+            aes(x = max_temp_summer, y = predicted_prob, linetype = Site),
+            linewidth = 0.75) +
+  # geom_ribbon(data = TP_Rick_max_temp_summer_AA_preds,
+  #             aes(x = max_temp_summer, y = predicted_prob,
+  #                 ymin = ci_lower, ymax = ci_upper, linetype = Site),
+  #             alpha = 0.2) +
+  # PF AA
+  geom_line(data = PF_Rick_max_temp_summer_AA_preds,
+            aes(x = max_temp_summer, y = predicted_prob, linetype = Site),
+            linewidth = 0.75) +
+  # geom_ribbon(data = PF_Rick_max_temp_summer_AA_preds,
+  #             aes(x = max_temp_summer, y = predicted_prob,
+  #                 ymin = ci_lower, ymax = ci_upper, linetype = Site),
+  #             alpha = 0.2) +
+  # TP DV
+  geom_line(data = TP_Rick_max_temp_summer_DV_preds,
+            aes(x = max_temp_summer, y = predicted_prob, linetype = Site),
+            linewidth = 0.75) +
+  # geom_ribbon(data = TP_Rick_max_temp_summer_DV_preds,
+  #             aes(x = max_temp_summer, y = predicted_prob,
+  #                 ymin = ci_lower, ymax = ci_upper, linetype = Site),
+  #             alpha = 0.2) +
+  # PF DV
+  geom_line(data = PF_Rick_max_temp_summer_DV_preds,
+            aes(x = max_temp_summer, y = predicted_prob, linetype = Site),
+            linewidth = 0.75) +
+  # geom_ribbon(data = PF_Rick_max_temp_summer_DV_preds,
+  #             aes(x = max_temp_summer, y = predicted_prob,
+  #                 ymin = ci_lower, ymax = ci_upper, linetype = Site),
+  #             alpha = 0.2) +
+  labs(x = expression("Nymphal Questing Max Summer Temperature (" * ~degree * C * ")"),
+       y = "Rickettsia Bacteria \nPredicted Probability") +
+  manuscript_theme +
+  facet_wrap(~SPECIES) +
+  theme(strip.background = element_blank(),
+        strip.text = element_text(face = "bold.italic", size = rel(1.5)))
+
+  
+
+ggsave("Figs/Rick_sum.jpg", plot = Rick_sum, units = "in",
+       width = 6, height = 4)
+
+
+
+
+# plot for pdsi at both study sites ----
+
+# Add a new column to each dataset
+TP_Rick_Mean_PDSI_AA_preds$Site <- "Remnant"
+PF_Rick_Mean_PDSI_AA_preds$Site <- "Reconstructed"
+
+TP_Rick_Mean_PDSI_DV_preds$Site <- "Remnant"
+PF_Rick_Mean_PDSI_DV_preds$Site <- "Reconstructed"
+
+TP_Rick_Mean_PDSI_AA_preds$SPECIES <- "A. americanum"
+PF_Rick_Mean_PDSI_AA_preds$SPECIES <- "A. americanum"
+
+TP_Rick_Mean_PDSI_DV_preds$SPECIES <- "D. variabilis"
+PF_Rick_Mean_PDSI_DV_preds$SPECIES <- "D. variabilis"
+
+
+Rick_pdsi <- ggplot() +
+  # TP AA
+  geom_line(data = TP_Rick_Mean_PDSI_AA_preds,
+            aes(x = Mean_PDSI, y = predicted_prob, linetype = Site),
+            linewidth = 0.75) +
+  # geom_ribbon(data = TP_Rick_Mean_PDSI_AA_preds,
+  #             aes(x = Mean_PDSI, y = predicted_prob,
+  #                 ymin = ci_lower, ymax = ci_upper, linetype = Site),
+  #             alpha = 0.2) +
+  # PF AA
+  geom_line(data = PF_Rick_Mean_PDSI_AA_preds,
+            aes(x = Mean_PDSI, y = predicted_prob, linetype = Site),
+            linewidth = 0.75) +
+  # geom_ribbon(data = PF_Rick_Mean_PDSI_AA_preds,
+  #             aes(x = Mean_PDSI, y = predicted_prob,
+  #                 ymin = ci_lower, ymax = ci_upper, linetype = Site),
+  #             alpha = 0.2) +
+  # TP DV
+  geom_line(data = TP_Rick_Mean_PDSI_DV_preds,
+            aes(x = Mean_PDSI, y = predicted_prob, linetype = Site),
+            linewidth = 0.75) +
+  # geom_ribbon(data = TP_Rick_Mean_PDSI_DV_preds,
+  #             aes(x = Mean_PDSI, y = predicted_prob,
+  #                 ymin = ci_lower, ymax = ci_upper, linetype = Site),
+  #             alpha = 0.2) +
+  geom_line(data = PF_Rick_Mean_PDSI_DV_preds,
+            aes(x = Mean_PDSI, y = predicted_prob, linetype = Site),
+            linewidth = 0.75) +
+  # geom_ribbon(data = PF_Rick_Mean_PDSI_DV_preds,
+  #             aes(x = Mean_PDSI, y = predicted_prob,
+  #                 ymin = ci_lower, ymax = ci_upper, linetype = Site),
+  #             alpha = 0.2) +
+  labs(x = "PDSI",
+       y = "Rickettsia Bacteria \nPredicted Probability") +
+  manuscript_theme +
+  facet_wrap(~SPECIES) +
+  theme(strip.background = element_blank(),
+        strip.text = element_text(face = "bold.italic", size = rel(1.5)))
+
+
+ggsave("Figs/Rick_pdsi.jpg", plot = Rick_pdsi, units = "in",
+       width = 6, height = 4)
+```
+
+
+## Climate figs with both bacteria together
+
+```{r}
+# For max summer temp----
+# remove stuff 
+P1 <- ggplot() +
+  # TP AA
+  geom_line(data = TP_Fran_max_temp_summer_AA_preds,
+            aes(x = max_temp_summer, y = predicted_prob, linetype = Site),
+            linewidth = 0.75) +
+  # geom_ribbon(data = TP_Fran_max_temp_summer_AA_preds,
+  #             aes(x = max_temp_summer, y = predicted_prob,
+  #                 ymin = ci_lower, ymax = ci_upper, linetype = Site),
+  #             alpha = 0.2) +
+  # PF AA
+  geom_line(data = PF_Fran_max_temp_summer_AA_preds,
+            aes(x = max_temp_summer, y = predicted_prob, linetype = Site),
+            linewidth = 0.75) +
+  # geom_ribbon(data = PF_Fran_max_temp_summer_AA_preds,
+  #             aes(x = max_temp_summer, y = predicted_prob,
+  #                 ymin = ci_lower, ymax = ci_upper, linetype = Site),
+  #             alpha = 0.2) +
+  # TP DV
+  geom_line(data = TP_Fran_max_temp_summer_DV_preds,
+            aes(x = max_temp_summer, y = predicted_prob, linetype = Site),
+            linewidth = 0.75) +
+  # geom_ribbon(data = TP_Fran_max_temp_summer_DV_preds,
+  #             aes(x = max_temp_summer, y = predicted_prob,
+  #                 ymin = ci_lower, ymax = ci_upper, linetype = Site),
+  #             alpha = 0.2) +
+  # PF DV
+  geom_line(data = PF_Fran_max_temp_summer_DV_preds,
+            aes(x = max_temp_summer, y = predicted_prob, linetype = Site),
+            linewidth = 0.75) +
+  # geom_ribbon(data = PF_Fran_max_temp_summer_DV_preds,
+  #             aes(x = max_temp_summer, y = predicted_prob,
+  #                 ymin = ci_lower, ymax = ci_upper, linetype = Site),
+  #             alpha = 0.2) +
+  labs(x = expression("Nymphal Questing Max Summer Temperature (" * ~degree * C * ")"),
+       y = "Francisella Bacteria \nPredicted Probability") +
+  manuscript_theme +
+  facet_wrap(~SPECIES) +
+  theme(strip.background = element_blank(),
+        strip.text = element_text(face = "bold.italic", size = rel(1.5)),
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank())
+
+P2 <- ggplot() +
+  # TP AA
+  geom_line(data = TP_Rick_max_temp_summer_AA_preds,
+            aes(x = max_temp_summer, y = predicted_prob, linetype = Site),
+            linewidth = 0.75) +
+  # geom_ribbon(data = TP_Rick_max_temp_summer_AA_preds,
+  #             aes(x = max_temp_summer, y = predicted_prob,
+  #                 ymin = ci_lower, ymax = ci_upper, linetype = Site),
+  #             alpha = 0.2) +
+  # PF AA
+  geom_line(data = PF_Rick_max_temp_summer_AA_preds,
+            aes(x = max_temp_summer, y = predicted_prob, linetype = Site),
+            linewidth = 0.75) +
+  # geom_ribbon(data = PF_Rick_max_temp_summer_AA_preds,
+  #             aes(x = max_temp_summer, y = predicted_prob,
+  #                 ymin = ci_lower, ymax = ci_upper, linetype = Site),
+  #             alpha = 0.2) +
+  # TP DV
+  geom_line(data = TP_Rick_max_temp_summer_DV_preds,
+            aes(x = max_temp_summer, y = predicted_prob, linetype = Site),
+            linewidth = 0.75) +
+  # geom_ribbon(data = TP_Rick_max_temp_summer_DV_preds,
+  #             aes(x = max_temp_summer, y = predicted_prob,
+  #                 ymin = ci_lower, ymax = ci_upper, linetype = Site),
+  #             alpha = 0.2) +
+  # PF DV
+  geom_line(data = PF_Rick_max_temp_summer_DV_preds,
+            aes(x = max_temp_summer, y = predicted_prob, linetype = Site),
+            linewidth = 0.75) +
+  # geom_ribbon(data = PF_Rick_max_temp_summer_DV_preds,
+  #             aes(x = max_temp_summer, y = predicted_prob,
+  #                 ymin = ci_lower, ymax = ci_upper, linetype = Site),
+  #             alpha = 0.2) +
+  labs(x = expression("Nymphal Questing Max Summer Temperature (" * ~degree * C * ")"),
+       y = "Rickettsia Bacteria \nPredicted Probability") +
+  manuscript_theme +
+  facet_wrap(~SPECIES) +
+  theme(strip.background = element_blank(),
+        strip.text = element_blank())
+
+
+
+# Combine plots with shared legend from P1
+max_sum_comb <- (P1 / P2) + 
+  plot_layout(guides = "collect") +
+  plot_annotation(tag_levels = "a", tag_suffix = ".") &
+  theme(legend.position = "right",
+        legend.justification = "center")
+
+# save
+ggsave("Figs/max_sum_comb.jpg", plot = max_sum_comb, units = "in",
+       width = 6, height = 4)
+
+
+# for pdsi ----
+P3 <- ggplot() +
+  # TP AA
+  geom_line(data = TP_Fran_Mean_PDSI_AA_preds,
+            aes(x = Mean_PDSI, y = predicted_prob, linetype = Site),
+            linewidth = 0.75) +
+  # geom_ribbon(data = TP_Fran_Mean_PDSI_AA_preds,
+  #             aes(x = Mean_PDSI, y = predicted_prob,
+  #                 ymin = ci_lower, ymax = ci_upper, linetype = Site),
+  #             alpha = 0.2) +
+  # PF AA
+  geom_line(data = PF_Fran_Mean_PDSI_AA_preds,
+            aes(x = Mean_PDSI, y = predicted_prob, linetype = Site),
+            linewidth = 0.75) +
+  # geom_ribbon(data = PF_Fran_Mean_PDSI_AA_preds,
+  #             aes(x = Mean_PDSI, y = predicted_prob,
+  #                 ymin = ci_lower, ymax = ci_upper, linetype = Site),
+  #             alpha = 0.2) +
+  # TP DV
+  geom_line(data = TP_Fran_Mean_PDSI_DV_preds,
+            aes(x = Mean_PDSI, y = predicted_prob, linetype = Site),
+            linewidth = 0.75) +
+  # geom_ribbon(data = TP_Fran_Mean_PDSI_DV_preds,
+  #             aes(x = Mean_PDSI, y = predicted_prob,
+  #                 ymin = ci_lower, ymax = ci_upper, linetype = Site),
+  #             alpha = 0.2) +
+  geom_line(data = PF_Fran_Mean_PDSI_DV_preds,
+            aes(x = Mean_PDSI, y = predicted_prob, linetype = Site),
+            linewidth = 0.75) +
+  # geom_ribbon(data = PF_Fran_Mean_PDSI_DV_preds,
+  #             aes(x = Mean_PDSI, y = predicted_prob,
+  #                 ymin = ci_lower, ymax = ci_upper, linetype = Site),
+  #             alpha = 0.2) +
+  labs(x = "PDSI",
+       y = "Francisella Bacteria \nPredicted Probability") +
+  manuscript_theme +
+  facet_wrap(~SPECIES) +
+  theme(strip.background = element_blank(),
+        strip.text = element_text(face = "bold.italic", size = rel(1.5)),
+        axis.text.x = element_blank(),
+        axis.title.x = element_blank())
+
+P4 <- ggplot() +
+  # TP AA
+  geom_line(data = TP_Rick_Mean_PDSI_AA_preds,
+            aes(x = Mean_PDSI, y = predicted_prob, linetype = Site),
+            linewidth = 0.75) +
+  # geom_ribbon(data = TP_Rick_Mean_PDSI_AA_preds,
+  #             aes(x = Mean_PDSI, y = predicted_prob,
+  #                 ymin = ci_lower, ymax = ci_upper, linetype = Site),
+  #             alpha = 0.2) +
+  # PF AA
+  geom_line(data = PF_Rick_Mean_PDSI_AA_preds,
+            aes(x = Mean_PDSI, y = predicted_prob, linetype = Site),
+            linewidth = 0.75) +
+  # geom_ribbon(data = PF_Rick_Mean_PDSI_AA_preds,
+  #             aes(x = Mean_PDSI, y = predicted_prob,
+  #                 ymin = ci_lower, ymax = ci_upper, linetype = Site),
+  #             alpha = 0.2) +
+  # TP DV
+  geom_line(data = TP_Rick_Mean_PDSI_DV_preds,
+            aes(x = Mean_PDSI, y = predicted_prob, linetype = Site),
+            linewidth = 0.75) +
+  # geom_ribbon(data = TP_Rick_Mean_PDSI_DV_preds,
+  #             aes(x = Mean_PDSI, y = predicted_prob,
+  #                 ymin = ci_lower, ymax = ci_upper, linetype = Site),
+  #             alpha = 0.2) +
+  geom_line(data = PF_Rick_Mean_PDSI_DV_preds,
+            aes(x = Mean_PDSI, y = predicted_prob, linetype = Site),
+            linewidth = 0.75) +
+  # geom_ribbon(data = PF_Rick_Mean_PDSI_DV_preds,
+  #             aes(x = Mean_PDSI, y = predicted_prob,
+  #                 ymin = ci_lower, ymax = ci_upper, linetype = Site),
+  #             alpha = 0.2) +
+  labs(x = "PDSI",
+       y = "Rickettsia Bacteria \nPredicted Probability") +
+  manuscript_theme +
+  facet_wrap(~SPECIES) +
+  theme(strip.background = element_blank(),
+        strip.text = element_blank())
+
+
+# Combine plots with shared legend from P1
+pdsi_comb <- (P3 / P4) + 
+  plot_layout(guides = "collect") +
+  plot_annotation(tag_levels = "a", tag_suffix = ".") &
+  theme(legend.position = "right",
+        legend.justification = "center")
+
+# save
+ggsave("Figs/pdsi_comb.jpg", plot = pdsi_comb, units = "in",
+       width = 6, height = 4)
+```
+
+
+
+### Oral Presentation Figure
+
+```{r}
+
+# try again
+
+
+# create map with prairie locs
+locs <- tribble(~ lat, ~ lon, ~ ID,
+                38.8922, -91.7408, "Prairie Fork",
+                38.949, -91.9902, "Tucker")
+
+# find the center point between the sites
+center_lat <- mean(locs$lat)
+center_lon <- mean(locs$lon)
+span <- 0.2
+
+# bounding box
+square_bbox <- c(
+  left   = center_lon - span,
+  bottom = center_lat - span,
+  right  = center_lon + span,
+  top    = center_lat + span
+)
+
+
+# download map
+sq_map <- get_stadiamap(square_bbox,
+                        maptype = "outdoors")
+
+inset_map <- ggmap(sq_map) + 
+  geom_point(data = locs,
+             mapping = aes(x = lon, y = lat),
+             color = "red",
+             size = 3) +
+  geom_text_repel(data = locs,
+                  mapping = aes(x = lon, y = lat, label = ID),
+                  box.padding = 1,
+                  seed = 431579) +
+  theme_void() +
+  theme(
+    plot.background = element_rect(color = "black", linewidth = 0.5, fill = "transparent"),
+    panel.border = element_rect(color = "black", linewidth = 0.5, fill = NA)
+  )
+
+# Country outlines
+world <- ne_countries(scale = "medium", returnclass = "sf")
+
+# US state outlines
+us_states <- ne_states(country = "United States of America", returnclass = "sf")
+
+# Your site points (already in sf format)
+# sites in sf
+sites_sf <- st_as_sf(locs, coords = c("lon", "lat"))
+
+# convert to sf in WGS84
+sites_sf <- st_as_sf(locs, coords = c("lon", "lat"), crs = 4326)
+
+
+# Plot
+main_map <- ggplot() +
+  geom_sf(data = world, fill = "gray95", color = "black") +  # Country outlines
+  geom_sf(data = us_states, fill = NA, color = "darkgray", linewidth = 0.5) +  # State outlines
+  geom_sf(data = sites_sf, color = "red", size = 1) +  # Your sites
+  coord_sf(xlim = c(-100, -80), ylim = c(30, 50)) +
+  theme_minimal()
+
+study_sites <- ggdraw() +
+  draw_plot(main_map) +
+  draw_plot(inset_map, x = 0.4, y = 0.38, width = 0.6, height = 0.6)
+
+# save
+ggsave("Figs/study_sites.jpg", plot = study_sites, units = "in",
+       width = 6, height = 4)
+
+```
+
+
+
+### Poster Presentation Figure
+
+## PFCA positivity
+```{r}
+# combine dfs 
+BOI_TP <- BOI_TP |> 
+  select(YEAR, FrancisellaPresence, RickettsiaPresence)
+
+BOI_TP$SITE <- "Tucker"
+
+BOI_PF <- BOI_PF |> 
+  select(YEAR, FrancisellaPresence, RickettsiaPresence)
+
+BOI_PF$SITE <- "Prairie Fork"
+
+BOI <- rbind(BOI_PF, BOI_TP)
+
+
+# plot for francisella positive cases over years
+Fran_pos <- BOI |> 
+  group_by(YEAR, SITE) |> 
+  summarise(positives = sum(FrancisellaPresence),
+            total = n())
+
+Fran_pos <- Fran_pos |> 
+  mutate(percent = (positives/total) * 100)
+
+
+
+Fran_pos_plot <- ggplot() +
+  geom_col(data = Fran_pos, aes(x = YEAR, y = total), fill = "grey80") +
+  geom_col(data = Fran_pos, aes(x = YEAR, y = positives), fill = "red") +
+  geom_text(data = Fran_pos,
+            aes(x = YEAR, y = positives, label = paste0(round(percent, 1), "%")),
+            vjust = -0.5, fontface = "bold", color = "black") +
+  facet_wrap(~SITE) +
+  labs(x = "Year", y = "Tick Pools",
+       title = "Francisella Bacteria Positivity") +
+  poster_theme +
+   theme(strip.background = element_blank(),
+        strip.text = element_text(face = "bold", size = rel(1)),
+        axis.title.x = element_blank(),
+        plot.title = element_text(hjust = 0.5))
+
+ggsave("Figs/Fran_pos_plot.jpg", plot = Fran_pos_plot, units = "in",
+       width = 9.5, height = 7)
+
+# plot Rickettsia positive cases over years
+Rick_pos <- BOI |> 
+  group_by(YEAR, SITE) |> 
+  summarise(positives = sum(RickettsiaPresence),
+            total = n())
+
+Rick_pos <-Rick_pos |> 
+  mutate(percent = (positives/total) * 100)
+
+
+
+Rick_pos_plot <- ggplot() +
+  geom_col(data =Rick_pos, aes(x = YEAR, y = total), fill = "grey80") +
+  geom_col(data =Rick_pos, aes(x = YEAR, y = positives), fill = "red") +
+  geom_text(data =Rick_pos,
+            aes(x = YEAR, y = positives, label = paste0(round(percent, 1), "%")),
+            vjust = -0.5, fontface = "bold", color = "black") +
+  facet_wrap(~SITE) +
+  labs(x = "Year", y = "Tick Pools",
+       title = "Rickettsia Bacteria Positivity") +
+  poster_theme +
+   theme(strip.background = element_blank(),
+        strip.text = element_text(face = "bold", size = rel(1)),
+        axis.title.x = element_blank(),
+        plot.title = element_text(hjust = 0.5))
+
+
+ggsave("Figs/Rick_pos_plot.jpg", plot =Rick_pos_plot, units = "in",
+       width = 9.5, height = 7)
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
