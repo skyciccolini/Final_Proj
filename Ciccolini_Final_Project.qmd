@@ -16,7 +16,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r}
 library(pacman)
 p_load(tidyverse, AICcmodavg, lme4, plotly, gridExtra, see, cowplot, patchwork,
-       ggmap, naturalearth, naturalearthhires, ggspatial)
+       ggmap, rnaturalearth, rnaturalearthhires, rnaturalearthdata, ggspatial, ggrepel, sf)
 
 
 
@@ -1176,8 +1176,8 @@ ggsave("Figs/pdsi_comb.jpg", plot = pdsi_comb, units = "in",
 
 ```{r}
 
-# try again
-
+# register API key for stadiamaps
+register_stadiamaps("6edc391b-d6e8-4fb5-93a3-bef7ef972e1e")
 
 # create map with prairie locs
 locs <- tribble(~ lat, ~ lon, ~ ID,
